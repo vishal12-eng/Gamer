@@ -14,29 +14,32 @@ import ClipboardIcon from '../components/icons/ClipboardIcon';
 const AdminDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const [systemStatus, setSystemStatus] = useState<{ api: string, db: string, latency: number }>({ api: 'Checking...', db: 'Checking...', latency: 0 });
+  const [stats, setStats] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<number[]>([40, 65, 45, 80, 55, 90, 75]);
+  const [loading, setLoading] = useState(true);
 
-  // Simulate checking system health
+  // Fetch live metrics from backend
   useEffect(() => {
-    const checkHealth = () => {
-      const latency = Math.floor(Math.random() * 120) + 20;
-      setSystemStatus({
-        api: latency < 100 ? 'Operational' : 'Degraded',
-        db: 'Connected',
-        latency
-      });
+    const fetchMetrics = async () => {
+      try {
+        const response = await fetch('/.netlify/functions/dashboardMetrics');
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data.stats);
+          setChartData(data.chartData);
+          setSystemStatus(data.systemStatus);
+        }
+      } catch (error) {
+        console.error('Failed to fetch metrics:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    checkHealth();
-    const interval = setInterval(checkHealth, 5000);
+
+    fetchMetrics();
+    const interval = setInterval(fetchMetrics, 10000); // Refresh every 10 seconds
     return () => clearInterval(interval);
   }, []);
-
-  const stats = [
-    { label: 'Articles Today', value: '12', trend: '+20%', color: 'text-cyan-400', border: 'border-cyan-500/30' },
-    { label: 'AI Credits Used', value: '8,450', trend: '85% cap', color: 'text-purple-400', border: 'border-purple-500/30' },
-    { label: 'Total Reads', value: '14.2k', trend: '+5.4%', color: 'text-green-400', border: 'border-green-500/30' },
-    { label: 'Pending Reviews', value: '4', trend: 'Urgent', color: 'text-yellow-400', border: 'border-yellow-500/30' },
-  ];
 
   const tools = [
     { name: 'Manage Articles', path: '/admin/articles', icon: <ClipboardIcon className="w-6 h-6" />, desc: 'Edit, update, and SEO check.' },
@@ -44,9 +47,6 @@ const AdminDashboardPage: React.FC = () => {
     { name: 'Blog Generator', path: '/ai-tools?tab=blog', icon: <TechnologyIcon className="w-6 h-6" />, desc: 'Draft posts from topics.' },
     { name: 'Image Generator', path: '/ai-tools?tab=generate', icon: <GadgetsIcon className="w-6 h-6" />, desc: 'Create visuals via Imagen.' },
   ];
-
-  // Mock Chart Data (Simple representation)
-  const chartData = [40, 65, 45, 80, 55, 90, 75];
 
   return (
     <div className="max-w-7xl mx-auto">
