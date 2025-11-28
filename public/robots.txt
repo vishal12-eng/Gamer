@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /ai-tools/
+
+Sitemap: https://futuretechjournal50.netlify.app/sitemap.xml

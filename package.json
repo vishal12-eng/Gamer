@@ -1,0 +1,28 @@
+{
+  "name": "futuretechjournal",
+  "version": "1.0.0",
+  "description": "An ultra-modern, AI-powered news and blog website.",
+  "private": true,
+  "scripts": {
+    "preinstall": "npm cache clean --force",
+    "dev": "vite",
+    "build": "vite build && npm run seo:generate",
+    "preview": "vite preview",
+    "seo:generate": "node scripts/generate-sitemap.js && node scripts/generate-robots.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.29.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-router-dom": "6.22.3",
+    "react-helmet-async": "2.0.5",
+    "@netlify/functions": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.2.0",
+    "typescript": "^5.5.3"
+  }
+}
