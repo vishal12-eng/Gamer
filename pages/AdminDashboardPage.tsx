@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SparklesIcon from '../components/icons/SparklesIcon';
-import SummarizeIcon from '../components/icons/SummarizeIcon';
 import TechnologyIcon from '../components/icons/TechnologyIcon';
 import GadgetsIcon from '../components/icons/GadgetsIcon';
 import ChartIcon from '../components/icons/ChartIcon';
@@ -14,25 +13,44 @@ import ClipboardIcon from '../components/icons/ClipboardIcon';
 const AdminDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const [systemStatus, setSystemStatus] = useState<{ api: string, db: string, latency: number }>({ api: 'Checking...', db: 'Checking...', latency: 0 });
-  const [stats, setStats] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([
+    { label: 'Articles Today', value: 'Loading...', trend: '--', color: 'text-cyan-400', border: 'border-cyan-500/30' },
+    { label: 'AI Credits Used', value: 'Loading...', trend: '--', color: 'text-purple-400', border: 'border-purple-500/30' },
+    { label: 'Total Reads', value: 'Loading...', trend: '--', color: 'text-green-400', border: 'border-green-500/30' },
+    { label: 'Pending Reviews', value: 'Loading...', trend: '--', color: 'text-yellow-400', border: 'border-yellow-500/30' },
+  ]);
   const [chartData, setChartData] = useState<number[]>([40, 65, 45, 80, 55, 90, 75]);
-  const [loading, setLoading] = useState(true);
 
   // Fetch live metrics from backend
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
+        console.log('Fetching dashboard metrics...');
         const response = await fetch('/.netlify/functions/dashboardMetrics');
-        if (response.ok) {
-          const data = await response.json();
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Metrics data received:', data);
+        
+        if (data.stats && data.stats.length > 0) {
           setStats(data.stats);
           setChartData(data.chartData);
           setSystemStatus(data.systemStatus);
+          console.log('Stats updated successfully');
         }
       } catch (error) {
         console.error('Failed to fetch metrics:', error);
-      } finally {
-        setLoading(false);
+        // Set default stats if fetch fails
+        setStats([
+          { label: 'Articles Today', value: '--', trend: 'N/A', color: 'text-cyan-400', border: 'border-cyan-500/30' },
+          { label: 'AI Credits Used', value: '--', trend: 'N/A', color: 'text-purple-400', border: 'border-purple-500/30' },
+          { label: 'Total Reads', value: '--', trend: 'N/A', color: 'text-green-400', border: 'border-green-500/30' },
+          { label: 'Pending Reviews', value: '--', trend: 'N/A', color: 'text-yellow-400', border: 'border-yellow-500/30' },
+        ]);
       }
     };
 
