@@ -32,3 +32,12 @@ waitForPort = 5000
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 40433
+externalPort = 3000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["npx", "netlify", "dev", "--targetPort", "5000"]
+build = ["npm", "cache", "clean", "--force", "&&", "npm", "ci", "&&", "npm", "run", "build"]
