@@ -96,9 +96,14 @@ export const chatWithBotStream = async (history: any[], newMessage: string) => {
   async function* streamGenerator() {
     if (result.text) {
       const words = result.text.match(/\S+|\s+/g) || [];
+      let lastWord = '';
       for (const word of words) {
-        yield { text: word };
-        await new Promise(r => setTimeout(r, 10));
+        // Skip consecutive duplicate words to prevent duplication
+        if (word !== lastWord) {
+          yield { text: word };
+          lastWord = word;
+          await new Promise(r => setTimeout(r, 10));
+        }
       }
     } else {
       yield { text: "I'm having trouble responding." };
