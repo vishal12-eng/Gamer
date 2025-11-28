@@ -8,7 +8,7 @@
 
 [dev]
   command = "npm run dev"
-  targetPort = 5000
+  targetPort = 5173
   framework = "#custom"
 
 # SPA routing — IMPORTANT (prevents 404 on refresh)
