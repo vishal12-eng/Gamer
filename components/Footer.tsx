@@ -11,14 +11,28 @@ const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim()) {
-        const existing = JSON.parse(localStorage.getItem('newsletter_emails') || '[]');
-        existing.push(email);
-        localStorage.setItem('newsletter_emails', JSON.stringify(existing));
-        setSubscribed(true);
-        setEmail('');
+      try {
+        const response = await fetch('/.netlify/functions/mailchimpSubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setSubscribed(true);
+          setEmail('');
+          setTimeout(() => setSubscribed(false), 5000);
+        } else {
+          alert(data.error || 'Subscription failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Subscribe error:', error);
+        alert('Error subscribing. Please try again.');
+      }
     }
   };
 
