@@ -95,7 +95,7 @@ export const chatWithBotStream = async (history: any[], newMessage: string) => {
 
   async function* streamGenerator() {
     if (result.text) {
-      const words = result.text.split(/(?=\s)/g);
+      const words = result.text.match(/\S+|\s+/g) || [];
       for (const word of words) {
         yield { text: word };
         await new Promise(r => setTimeout(r, 10));
