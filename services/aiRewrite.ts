@@ -1,7 +1,6 @@
-// Service to rewrite articles using the Netlify Serverless Function
-// Removes direct Gemini SDK dependency
+// Service to rewrite articles using the AI Handler API
 
-const AI_ENDPOINT = "/.netlify/functions/aiHandler";
+const AI_ENDPOINT = "/api/aiHandler";
 
 interface RewrittenArticle {
   title: string;

@@ -18,10 +18,14 @@ export default defineConfig({
       protocol: 'wss',
     },
     proxy: {
-      '/.netlify/functions': {
-        target: 'http://localhost:8888',
+      '/api': {
+        target: 'http://localhost:3001',
         changeOrigin: true,
-        rewrite: (path) => path,
+      },
+      '/.netlify/functions': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace('/.netlify/functions', '/api'),
       },
     },
   },

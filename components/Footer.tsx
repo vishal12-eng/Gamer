@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
     e.preventDefault();
     if (email.trim()) {
       try {
-        const response = await fetch('/.netlify/functions/mailchimpSubscribe', {
+        const response = await fetch('/api/mailchimpSubscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),

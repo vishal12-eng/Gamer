@@ -1,5 +1,5 @@
 // Service to fetch images from Pixabay API
-const PIXABAY_ENDPOINT = "/.netlify/functions/pixabayImage";
+const PIXABAY_ENDPOINT = "/api/pixabayImage";
 
 // In-memory cache to avoid repeated API calls (reset on page refresh)
 const imageCache: Record<string, string> = {};

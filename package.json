@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "preinstall": "npm cache clean --force",
-    "dev": "vite",
+    "dev": "node server/index.js & vite",
+    "dev:frontend": "vite",
+    "dev:backend": "node server/index.js",
     "build": "vite build && npm run seo:generate",
     "preview": "vite preview",
     "seo:generate": "node scripts/generate-sitemap.js && node scripts/generate-robots.js"
@@ -14,6 +16,8 @@
     "@google/genai": "^1.29.1",
     "@netlify/functions": "^2.6.0",
     "@types/node": "^24.10.1",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-helmet-async": "2.0.5",

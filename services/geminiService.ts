@@ -1,6 +1,6 @@
 
-// Service to interact with the Netlify AI Handler Function
-const AI_ENDPOINT = "/.netlify/functions/aiHandler";
+// Service to interact with the AI Handler API
+const AI_ENDPOINT = "/api/aiHandler";
 
 // --- HELPER TO CALL SERVERLESS FUNCTION ---
 const callAi = async (action: string, payload: any) => {
