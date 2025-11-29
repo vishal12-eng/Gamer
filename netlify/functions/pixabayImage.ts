@@ -20,6 +20,21 @@ interface ResponsePayload {
   error?: string;
 }
 
+// Helper function to extract keywords from title
+const extractKeywords = (title: string): string[] => {
+  // Remove special characters and split by spaces
+  const cleaned = title
+    .replace(/[^a-zA-Z0-9\s]/g, ' ') // Remove special chars
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(word => word.length > 2 && word.length < 15); // Keep words 3-14 chars
+  
+  // Remove common words
+  const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'been', 'was', 'are', 'but', 'will', 'can', 'all', 'has', 'had', 'not', 'you', 'your', 'she', 'her', 'his', 'him', 'its', 'our', 'out', 'get', 'got', 'make', 'made', 'say', 'said', 'new']);
+  
+  return cleaned.filter(word => !stopWords.has(word)).slice(0, 3);
+};
+
 const handler: Handler = async (event, context) => {
   console.log("[Pixabay Handler] Request received");
   
@@ -56,7 +71,7 @@ const handler: Handler = async (event, context) => {
 
     const body = JSON.parse(event.body || "{}");
     const { searchQuery, category } = body;
-    console.log(`[Pixabay Handler] Search Query: "${searchQuery}", Category: "${category}"`);
+    console.log(`[Pixabay Handler] Original Query: "${searchQuery}", Category: "${category}"`);
 
     if (!searchQuery) {
       console.error("[Pixabay Handler] Missing searchQuery parameter");
@@ -70,13 +85,19 @@ const handler: Handler = async (event, context) => {
       };
     }
 
-    // Build search query: prioritize article title, supplement with category
-    const queries = [searchQuery];
-    if (category && category !== "All") {
-      queries.push(category);
-    }
-    queries.push("technology"); // Always include as final fallback
-    console.log(`[Pixabay Handler] Search queries: ${queries.join(", ")}`);
+    // Extract keywords from title to create cleaner search queries
+    const keywords = extractKeywords(searchQuery);
+    console.log(`[Pixabay Handler] Extracted keywords: ${keywords.join(", ")}`);
+
+    // Build search queries: use extracted keywords, then category, then generic fallback
+    const queries = [
+      ...keywords, // Use individual keywords
+      keywords.join(" "), // Try all keywords together
+      category || "technology", // Use category
+      "stock photo" // Final fallback
+    ].filter((q, idx, arr) => q && arr.indexOf(q) === idx); // Remove duplicates
+    
+    console.log(`[Pixabay Handler] Final search queries: ${queries.join(", ")}`);
 
     let imageUrl: string | null = null;
 
