@@ -108,15 +108,21 @@ app.post('/api/aiHandler', async (req, res) => {
   }
 });
 
-// Cache for Pixabay images to reduce API calls
+// Cache for Pixabay images to reduce API calls (but clear old entries)
 const pixabayCache = {};
 const requestQueue = [];
 let isRequestPending = false;
 
 // Add delay between requests to respect rate limits
 const delayBetweenRequests = async () => {
-  return new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay between requests
+  return new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay between requests
 };
+
+// Clear cache every 30 minutes to allow fresh searches
+setInterval(() => {
+  console.log('[Pixabay Handler] Clearing cache to allow fresh searches');
+  Object.keys(pixabayCache).forEach(key => delete pixabayCache[key]);
+}, 30 * 60 * 1000);
 
 app.post('/api/pixabayImage', async (req, res) => {
   try {
@@ -165,36 +171,41 @@ app.post('/api/pixabayImage', async (req, res) => {
       }
     };
 
-    // Category to generic search term mapping
+    // Category to generic search term mapping with broader fallbacks
     const categorySearchMap = {
-      'Technology': 'technology innovation',
-      'AI': 'artificial intelligence robot',
-      'Business': 'business corporate finance',
-      'Science': 'science research discovery',
-      'Entertainment': 'entertainment movie celebrity',
-      'Product': 'technology gadget product',
-      'Global': 'world global news',
-      'India': 'india flag culture',
-      'US': 'america usa city',
-      'All': 'news article'
+      'Technology': ['technology', 'innovation', 'computer', 'digital'],
+      'AI': ['artificial intelligence', 'robot', 'automation', 'technology'],
+      'Business': ['business', 'corporate', 'finance', 'economy'],
+      'Science': ['science', 'research', 'discovery', 'laboratory'],
+      'Entertainment': ['entertainment', 'movie', 'celebrity', 'media'],
+      'Product': ['product', 'technology', 'gadget', 'device'],
+      'Global': ['world', 'globe', 'international', 'news'],
+      'India': ['india', 'delhi', 'mumbai', 'culture'],
+      'US': ['america', 'usa', 'new york', 'city'],
+      'All': ['news', 'article', 'photo', 'image']
     };
 
     const keywords = extractKeywords(searchQuery);
     console.log(`[Pixabay Handler] Extracted keywords: ${keywords.join(', ')}`);
 
-    // Build search queries with priority
-    const categoryQuery = categorySearchMap[category] || categorySearchMap['All'];
+    // Build search queries with priority - expanded for better coverage
+    const categoryQueries = Array.isArray(categorySearchMap[category]) 
+      ? categorySearchMap[category] 
+      : [categorySearchMap['All']];
+    
     const queries = [
-      // Primary: Category-based + first keyword
-      keywords.length > 0 ? `${categoryQuery} ${keywords[0]}` : categoryQuery,
+      // Primary: Category + keywords combined
+      ...categoryQueries.map(cat => `${cat} ${keywords[0] || ''}`).filter(q => q.trim()),
       // Secondary: Category alone
-      categoryQuery,
+      ...categoryQueries,
       // Tertiary: Individual keywords
       ...keywords,
       // Fallback: Combined keywords
-      keywords.slice(0, 2).join(' '),
+      keywords.length > 1 ? keywords.slice(0, 2).join(' ') : '',
       // Final fallback: Generic
-      'article news'
+      'photo',
+      'image',
+      'news'
     ].filter((q, idx, arr) => q && q.trim() && arr.indexOf(q) === idx);
     
     console.log(`[Pixabay Handler] Final search queries: ${queries.join(', ')}`);
