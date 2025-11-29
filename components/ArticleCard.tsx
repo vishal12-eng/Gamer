@@ -1,15 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Article, Category } from '../types';
 import { getCategoryStyle } from '../utils/categoryStyles';
 import { slugify } from '../utils/slugify';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
+import { fetchPixabayImage } from '../services/pixabayService';
 
 interface ArticleCardProps {
   article: Article;
 }
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
+  const [imageUrl, setImageUrl] = useState(article.imageUrl);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      setIsLoading(true);
+      try {
+        const pixabayUrl = await fetchPixabayImage(
+          article.title,
+          article.category,
+          article.imageUrl
+        );
+        setImageUrl(pixabayUrl);
+      } catch (error) {
+        console.error('Failed to load Pixabay image:', error);
+        // Keep original URL on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadImage();
+  }, [article.title, article.category, article.imageUrl]);
+
   const { bg, text } = getCategoryStyle(article.category as Category);
 
   const CategoryTag = ({ className = '' }: { className?: string }) => (
@@ -25,12 +50,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
       className="block group relative rounded-xl overflow-hidden shadow-lg hover:shadow-cyan-glow dark:hover:shadow-purple-glow hover:-translate-y-2 transition-all duration-500 border border-white/10 hover:border-cyan-400/50 h-96 text-white"
     >
       <img
-        src={article.imageUrl}
+        src={imageUrl}
         alt={article.title}
         loading="lazy"
         width="800"
         height="450"
-        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+          isLoading ? 'opacity-50' : 'opacity-100'
+        }`}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
       
