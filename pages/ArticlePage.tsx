@@ -6,6 +6,7 @@ import ReadingProgressBar from '../components/ReadingProgressBar';
 import ArticleCard from '../components/ArticleCard';
 import { summarizeText, translateText, generateTextToSpeech, suggestTags, analyzeReadability, expandContentStream } from '../services/geminiService';
 import { rewriteArticleForSEO } from '../services/aiRewrite';
+import { fetchPixabayImage } from '../services/pixabayService';
 import { 
   generateSEOTitle, 
   generateMetaDescription, 
@@ -209,6 +210,8 @@ const ArticlePage: React.FC = () => {
 
   const [article, setArticle] = useState<Article | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [isImageLoading, setIsImageLoading] = useState(true);
   
   // Expansion State
   const [expandedContent, setExpandedContent] = useState<string | null>(null);
@@ -245,6 +248,7 @@ const ArticlePage: React.FC = () => {
     const foundArticle = articles.find((a) => a.slug === slug);
     if (foundArticle) {
       setArticle(foundArticle);
+      setImageUrl(foundArticle.imageUrl);
 
       // Reset all state on article change
       setSummary('');
@@ -315,6 +319,32 @@ const ArticlePage: React.FC = () => {
         setArticle(null);
     }
   }, [slug, articles, loading, audioSource]);
+
+  // Fetch Pixabay image for article page
+  useEffect(() => {
+    if (!article) return;
+    
+    const loadArticleImage = async () => {
+      console.log(`[ArticlePage] Loading Pixabay image for: "${article.title}"`);
+      setIsImageLoading(true);
+      try {
+        const pixabayUrl = await fetchPixabayImage(
+          article.title,
+          article.category,
+          article.imageUrl
+        );
+        console.log(`[ArticlePage] Pixabay service returned: ${pixabayUrl}`);
+        setImageUrl(pixabayUrl);
+      } catch (error) {
+        console.error('[ArticlePage] Failed to load Pixabay image:', error);
+        // Keep original URL on error
+      } finally {
+        setIsImageLoading(false);
+      }
+    };
+
+    loadArticleImage();
+  }, [article]);
 
   const triggerAutoExpansion = async (articleToExpand: Article) => {
     setIsExpanding(true);
@@ -561,11 +591,11 @@ const ArticlePage: React.FC = () => {
 
         <figure className="my-8">
           <img 
-            src={article.imageUrl} 
+            src={imageUrl} 
             alt={article.title} 
             itemProp="image"
             loading="lazy"
-            className="w-full rounded-xl shadow-lg" 
+            className={`w-full rounded-xl shadow-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-50' : 'opacity-100'}`}
           />
           <figcaption className="text-center text-sm text-gray-500 mt-2 italic">{article.title}</figcaption>
         </figure>

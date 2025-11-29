@@ -64,6 +64,8 @@ Generates production builds with:
 - **Responsive Design**: Works on all devices
 - **Dark Mode**: Built-in dark mode support
 - **SEO Optimized**: Sitemap, robots.txt, meta tags
+- **Pixabay Integration**: Real images for articles (both cards and detail pages)
+- **Mailchimp Integration**: Newsletter subscription with email validation
 
 ## Important Configuration Notes
 
@@ -93,6 +95,26 @@ Generates production builds with:
 ### Using Replit Deploy
 When ready, use Replit's publish feature to create a live URL.
 
+## Image & Newsletter Features
+
+### Pixabay Image Integration
+- **Location**: `services/pixabayService.ts` and `netlify/functions/pixabayImage.ts`
+- **Features**: 
+  - Fetches real Pixabay images for each article
+  - Works on article cards (category pages) and article detail pages
+  - Smart caching to avoid repeated API calls
+  - Auto-clears cache every 15 minutes for fresh content
+  - Multiple search query variations for better results
+- **Performance**: Images cached in-memory, fallback to original URL on error
+
+### Mailchimp Newsletter Integration
+- **Location**: `components/Footer.tsx` and `netlify/functions/mailchimpSubscribe.ts`
+- **Features**:
+  - Email validation
+  - Subscribed emails added to Mailchimp list
+  - Newsletter form in footer with success/error messages
+  - API key managed via Replit Secrets
+
 ## Troubleshooting
 
 ### "Blocked request" Error
@@ -106,6 +128,12 @@ If you see "Blocked request. This host is not allowed":
 - AI functions require either:
   - Running `npx netlify dev` (handles both frontend + functions)
   - Or deploying to Netlify for production
+
+### Images Not Loading
+- Pixabay images load on article cards and article detail pages
+- Cache automatically clears every 15 minutes
+- Falls back to original image URL if Pixabay API fails
+- Check backend logs for Pixabay API errors
 
 ### Hot Module Replacement (HMR) Issues
 - HMR is configured for Replit's HTTPS proxy
