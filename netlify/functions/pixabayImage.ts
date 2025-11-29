@@ -22,17 +22,24 @@ interface ResponsePayload {
 
 // Helper function to extract keywords from title
 const extractKeywords = (title: string): string[] => {
-  // Remove special characters and split by spaces
-  const cleaned = title
-    .replace(/[^a-zA-Z0-9\s]/g, ' ') // Remove special chars
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(word => word.length > 2 && word.length < 15); // Keep words 3-14 chars
-  
-  // Remove common words
-  const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'been', 'was', 'are', 'but', 'will', 'can', 'all', 'has', 'had', 'not', 'you', 'your', 'she', 'her', 'his', 'him', 'its', 'our', 'out', 'get', 'got', 'make', 'made', 'say', 'said', 'new']);
-  
-  return cleaned.filter(word => !stopWords.has(word)).slice(0, 3);
+  try {
+    // Remove special characters and split by spaces
+    const cleaned = title
+      .replace(/[^a-zA-Z0-9\s]/g, ' ') // Remove special chars
+      .toLowerCase()
+      .trim()
+      .split(/\s+/)
+      .filter(word => word && word.length > 2 && word.length < 15); // Keep words 3-14 chars
+    
+    // Remove common words
+    const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'been', 'was', 'are', 'but', 'will', 'can', 'all', 'has', 'had', 'not', 'you', 'your', 'she', 'her', 'his', 'him', 'its', 'our', 'out', 'get', 'got', 'make', 'made', 'say', 'said', 'new', 'day', 'time', 'year', 'people']);
+    
+    const keywords = cleaned.filter(word => !stopWords.has(word)).slice(0, 2);
+    return keywords.length > 0 ? keywords : ['technology'];
+  } catch (error) {
+    console.error('[Pixabay] Keyword extraction error:', error);
+    return ['technology'];
+  }
 };
 
 const handler: Handler = async (event, context) => {
@@ -86,16 +93,23 @@ const handler: Handler = async (event, context) => {
     }
 
     // Extract keywords from title to create cleaner search queries
-    const keywords = extractKeywords(searchQuery);
+    let keywords: string[] = [];
+    try {
+      keywords = extractKeywords(searchQuery);
+    } catch (keywordError) {
+      console.error('[Pixabay Handler] Error extracting keywords:', keywordError);
+      keywords = ['technology'];
+    }
+    
     console.log(`[Pixabay Handler] Extracted keywords: ${keywords.join(", ")}`);
 
     // Build search queries: use extracted keywords, then category, then generic fallback
     const queries = [
       ...keywords, // Use individual keywords
       keywords.join(" "), // Try all keywords together
-      category || "technology", // Use category
-      "stock photo" // Final fallback
-    ].filter((q, idx, arr) => q && arr.indexOf(q) === idx); // Remove duplicates
+      category && category !== "All" ? category : "technology",
+      "photo" // Final fallback
+    ].filter((q, idx, arr) => q && q.trim() && arr.indexOf(q) === idx); // Remove duplicates and empty
     
     console.log(`[Pixabay Handler] Final search queries: ${queries.join(", ")}`);
 
