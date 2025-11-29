@@ -16,16 +16,19 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
 
   useEffect(() => {
     const loadImage = async () => {
+      console.log(`[ArticleCard] useEffect triggered for: "${article.title}"`);
       setIsLoading(true);
       try {
+        console.log(`[ArticleCard] Fetching Pixabay image...`);
         const pixabayUrl = await fetchPixabayImage(
           article.title,
           article.category,
           article.imageUrl
         );
+        console.log(`[ArticleCard] Pixabay service returned: ${pixabayUrl}`);
         setImageUrl(pixabayUrl);
       } catch (error) {
-        console.error('Failed to load Pixabay image:', error);
+        console.error('[ArticleCard] Failed to load Pixabay image:', error);
         // Keep original URL on error
       } finally {
         setIsLoading(false);

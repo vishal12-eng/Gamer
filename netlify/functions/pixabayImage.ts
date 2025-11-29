@@ -21,12 +21,16 @@ interface ResponsePayload {
 }
 
 const handler: Handler = async (event, context) => {
+  console.log("[Pixabay Handler] Request received");
+  
   // Handle preflight
   if (event.httpMethod === "OPTIONS") {
+    console.log("[Pixabay Handler] Preflight request");
     return { statusCode: 200, headers: corsHeaders, body: "ok" };
   }
 
   if (event.httpMethod !== "POST") {
+    console.error(`[Pixabay Handler] Invalid method: ${event.httpMethod}`);
     return {
       statusCode: 405,
       headers: corsHeaders,
@@ -36,22 +40,26 @@ const handler: Handler = async (event, context) => {
 
   try {
     const apiKey = process.env.PIXABAY_API_KEY;
+    console.log(`[Pixabay Handler] API Key available: ${!!apiKey}`);
+    
     if (!apiKey) {
-      console.error("Missing PIXABAY_API_KEY environment variable");
+      console.error("[Pixabay Handler] Missing PIXABAY_API_KEY environment variable");
       return {
         statusCode: 500,
         headers: corsHeaders,
         body: JSON.stringify({
           success: false,
-          error: "Server configuration error",
+          error: "Server configuration error: Missing API Key",
         } as ResponsePayload),
       };
     }
 
     const body = JSON.parse(event.body || "{}");
     const { searchQuery, category } = body;
+    console.log(`[Pixabay Handler] Search Query: "${searchQuery}", Category: "${category}"`);
 
     if (!searchQuery) {
+      console.error("[Pixabay Handler] Missing searchQuery parameter");
       return {
         statusCode: 400,
         headers: corsHeaders,
@@ -68,6 +76,7 @@ const handler: Handler = async (event, context) => {
       queries.push(category);
     }
     queries.push("technology"); // Always include as final fallback
+    console.log(`[Pixabay Handler] Search queries: ${queries.join(", ")}`);
 
     let imageUrl: string | null = null;
 
@@ -85,28 +94,33 @@ const handler: Handler = async (event, context) => {
         pixabayUrl.searchParams.append("safesearch", "true");
         pixabayUrl.searchParams.append("editors_choice", "true");
 
+        console.log(`[Pixabay Handler] Fetching from Pixabay with query: "${query}"`);
         const response = await fetch(pixabayUrl.toString());
+        console.log(`[Pixabay Handler] Pixabay API response status: ${response.status}`);
 
         if (!response.ok) {
           console.warn(
-            `Pixabay API responded with status ${response.status} for query: ${query}`
+            `[Pixabay Handler] Pixabay API responded with status ${response.status} for query: ${query}`
           );
           continue;
         }
 
         const data: PixabayApiResponse = await response.json();
+        console.log(`[Pixabay Handler] Pixabay response hits: ${data.hits?.length || 0}`);
 
         if (data.hits && data.hits.length > 0) {
           // Use largeImageURL for better quality, fallback to webformatURL
           imageUrl = data.hits[0].largeImageURL || data.hits[0].webformatURL;
           console.log(
-            `[Pixabay] Found image for query: "${query}" (${searchQuery})`
+            `[Pixabay Handler] Success! Found image for query: "${query}"`
           );
           break;
+        } else {
+          console.log(`[Pixabay Handler] No hits for query: "${query}"`);
         }
       } catch (fetchError) {
         console.error(
-          `Error fetching from Pixabay for query "${query}":`,
+          `[Pixabay Handler] Error fetching from Pixabay for query "${query}":`,
           fetchError instanceof Error ? fetchError.message : fetchError
         );
         // Continue to next query
@@ -114,6 +128,7 @@ const handler: Handler = async (event, context) => {
     }
 
     if (imageUrl) {
+      console.log(`[Pixabay Handler] Returning success with URL: ${imageUrl}`);
       return {
         statusCode: 200,
         headers: corsHeaders,
@@ -124,7 +139,7 @@ const handler: Handler = async (event, context) => {
       };
     } else {
       console.warn(
-        `[Pixabay] No images found for "${searchQuery}" (category: ${category})`
+        `[Pixabay Handler] No images found after all queries for "${searchQuery}"`
       );
       return {
         statusCode: 200,
@@ -137,7 +152,7 @@ const handler: Handler = async (event, context) => {
     }
   } catch (error) {
     console.error(
-      "Pixabay handler error:",
+      "[Pixabay Handler] Pixabay handler error:",
       error instanceof Error ? error.message : error
     );
     return {
