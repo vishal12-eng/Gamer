@@ -108,21 +108,23 @@ app.post('/api/aiHandler', async (req, res) => {
   }
 });
 
-// Cache for Pixabay images to reduce API calls (but clear old entries)
+// Cache for Pixabay images to reduce API calls
 const pixabayCache = {};
-const requestQueue = [];
-let isRequestPending = false;
+let usedImageUrls = new Set();
 
 // Add delay between requests to respect rate limits
 const delayBetweenRequests = async () => {
-  return new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay between requests
+  return new Promise(resolve => setTimeout(resolve, 100));
 };
 
-// Clear cache every 30 minutes to allow fresh searches
+// Clear cache every 15 minutes to allow fresh searches
 setInterval(() => {
   console.log('[Pixabay Handler] Clearing cache to allow fresh searches');
   Object.keys(pixabayCache).forEach(key => delete pixabayCache[key]);
-}, 30 * 60 * 1000);
+  usedImageUrls.clear();
+}, 15 * 60 * 1000);
+
+console.log('[Pixabay Handler] Cache cleared on server start');
 
 app.post('/api/pixabayImage', async (req, res) => {
   try {
@@ -221,13 +223,11 @@ app.post('/api/pixabayImage', async (req, res) => {
         pixabayUrl.searchParams.append('q', query);
         pixabayUrl.searchParams.append('image_type', 'photo');
         pixabayUrl.searchParams.append('order', 'popular');
-        pixabayUrl.searchParams.append('per_page', '1');
+        pixabayUrl.searchParams.append('per_page', '10');
         pixabayUrl.searchParams.append('safesearch', 'true');
-        pixabayUrl.searchParams.append('editors_choice', 'true');
 
         console.log(`[Pixabay Handler] Fetching from Pixabay with query: "${query}"`);
         
-        // Add delay to respect rate limits
         await delayBetweenRequests();
         
         const response = await fetch(pixabayUrl.toString());
@@ -242,7 +242,17 @@ app.post('/api/pixabayImage', async (req, res) => {
         console.log(`[Pixabay Handler] Pixabay response hits: ${data.hits?.length || 0}`);
 
         if (data.hits && data.hits.length > 0) {
-          imageUrl = data.hits[0].largeImageURL || data.hits[0].webformatURL;
+          const availableHits = data.hits.filter(hit => {
+            const url = hit.largeImageURL || hit.webformatURL;
+            return !usedImageUrls.has(url);
+          });
+          
+          const selectedHit = availableHits.length > 0 
+            ? availableHits[Math.floor(Math.random() * Math.min(availableHits.length, 5))]
+            : data.hits[Math.floor(Math.random() * Math.min(data.hits.length, 5))];
+          
+          imageUrl = selectedHit.largeImageURL || selectedHit.webformatURL;
+          usedImageUrls.add(imageUrl);
           console.log(`[Pixabay Handler] Success! Found image for query: "${query}"`);
           break;
         }
@@ -254,13 +264,11 @@ app.post('/api/pixabayImage', async (req, res) => {
     if (imageUrl) {
       console.log(`[Pixabay Handler] Returning success with URL: ${imageUrl}`);
       const result = { success: true, imageUrl };
-      pixabayCache[cacheKey] = result; // Cache successful result
+      pixabayCache[cacheKey] = result;
       res.json(result);
     } else {
       console.warn(`[Pixabay Handler] No images found after all queries for "${searchQuery}"`);
-      const result = { success: false, error: 'No images found' };
-      pixabayCache[cacheKey] = result; // Cache failed result too to avoid repeated attempts
-      res.json(result);
+      res.json({ success: false, error: 'No images found' });
     }
   } catch (error) {
     console.error('[Pixabay Handler] Error:', error.message);
