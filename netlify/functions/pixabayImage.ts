@@ -42,7 +42,7 @@ const extractKeywords = (title: string): string[] => {
   }
 };
 
-const handler: Handler = async (event, context) => {
+const handler: Handler = async (event) => {
   console.log("[Pixabay Handler] Request received");
   
   // Handle preflight

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Article, Category } from '../types';
 import { getCategoryStyle } from '../utils/categoryStyles';
-import { slugify } from '../utils/slugify';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import { fetchPixabayImage } from '../services/pixabayService';
 
