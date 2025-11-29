@@ -108,11 +108,28 @@ app.post('/api/aiHandler', async (req, res) => {
   }
 });
 
+// Cache for Pixabay images to reduce API calls
+const pixabayCache = {};
+const requestQueue = [];
+let isRequestPending = false;
+
+// Add delay between requests to respect rate limits
+const delayBetweenRequests = async () => {
+  return new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay between requests
+};
+
 app.post('/api/pixabayImage', async (req, res) => {
   try {
     const apiKey = process.env.PIXABAY_API_KEY;
-    console.log(`[Pixabay Handler] API Key available: ${!!apiKey}`);
-    
+    const { searchQuery, category } = req.body;
+
+    // Check cache first
+    const cacheKey = `${searchQuery}_${category}`;
+    if (pixabayCache[cacheKey]) {
+      console.log(`[Pixabay Handler] Cache hit for: "${searchQuery}"`);
+      return res.json(pixabayCache[cacheKey]);
+    }
+
     if (!apiKey) {
       console.error('[Pixabay Handler] Missing PIXABAY_API_KEY environment variable');
       return res.status(500).json({
@@ -121,7 +138,6 @@ app.post('/api/pixabayImage', async (req, res) => {
       });
     }
 
-    const { searchQuery, category } = req.body;
     console.log(`[Pixabay Handler] Original Query: "${searchQuery}", Category: "${category}"`);
 
     if (!searchQuery) {
@@ -140,23 +156,45 @@ app.post('/api/pixabayImage', async (req, res) => {
           .split(/\s+/)
           .filter(word => word && word.length > 2 && word.length < 15);
         
-        const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'been', 'was', 'are', 'but', 'will', 'can', 'all', 'has', 'had', 'not', 'you', 'your', 'she', 'her', 'his', 'him', 'its', 'our', 'out', 'get', 'got', 'make', 'made', 'say', 'said', 'new', 'day', 'time', 'year', 'people']);
+        const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'been', 'was', 'are', 'but', 'will', 'can', 'all', 'has', 'had', 'not', 'you', 'your', 'she', 'her', 'his', 'him', 'its', 'our', 'out', 'get', 'got', 'make', 'made', 'say', 'said', 'new', 'day', 'time', 'year', 'people', 'big', 'small', 'good', 'bad', 'old', 'young']);
         
-        const keywords = cleaned.filter(word => !stopWords.has(word)).slice(0, 2);
+        const keywords = cleaned.filter(word => !stopWords.has(word)).slice(0, 3);
         return keywords.length > 0 ? keywords : ['technology'];
       } catch (error) {
         return ['technology'];
       }
     };
 
+    // Category to generic search term mapping
+    const categorySearchMap = {
+      'Technology': 'technology innovation',
+      'AI': 'artificial intelligence robot',
+      'Business': 'business corporate finance',
+      'Science': 'science research discovery',
+      'Entertainment': 'entertainment movie celebrity',
+      'Product': 'technology gadget product',
+      'Global': 'world global news',
+      'India': 'india flag culture',
+      'US': 'america usa city',
+      'All': 'news article'
+    };
+
     const keywords = extractKeywords(searchQuery);
     console.log(`[Pixabay Handler] Extracted keywords: ${keywords.join(', ')}`);
 
+    // Build search queries with priority
+    const categoryQuery = categorySearchMap[category] || categorySearchMap['All'];
     const queries = [
+      // Primary: Category-based + first keyword
+      keywords.length > 0 ? `${categoryQuery} ${keywords[0]}` : categoryQuery,
+      // Secondary: Category alone
+      categoryQuery,
+      // Tertiary: Individual keywords
       ...keywords,
-      keywords.join(' '),
-      category && category !== 'All' ? category : 'technology',
-      'photo'
+      // Fallback: Combined keywords
+      keywords.slice(0, 2).join(' '),
+      // Final fallback: Generic
+      'article news'
     ].filter((q, idx, arr) => q && q.trim() && arr.indexOf(q) === idx);
     
     console.log(`[Pixabay Handler] Final search queries: ${queries.join(', ')}`);
@@ -177,6 +215,10 @@ app.post('/api/pixabayImage', async (req, res) => {
         pixabayUrl.searchParams.append('editors_choice', 'true');
 
         console.log(`[Pixabay Handler] Fetching from Pixabay with query: "${query}"`);
+        
+        // Add delay to respect rate limits
+        await delayBetweenRequests();
+        
         const response = await fetch(pixabayUrl.toString());
         console.log(`[Pixabay Handler] Pixabay API response status: ${response.status}`);
 
@@ -200,10 +242,14 @@ app.post('/api/pixabayImage', async (req, res) => {
 
     if (imageUrl) {
       console.log(`[Pixabay Handler] Returning success with URL: ${imageUrl}`);
-      res.json({ success: true, imageUrl });
+      const result = { success: true, imageUrl };
+      pixabayCache[cacheKey] = result; // Cache successful result
+      res.json(result);
     } else {
       console.warn(`[Pixabay Handler] No images found after all queries for "${searchQuery}"`);
-      res.json({ success: false, error: 'No images found' });
+      const result = { success: false, error: 'No images found' };
+      pixabayCache[cacheKey] = result; // Cache failed result too to avoid repeated attempts
+      res.json(result);
     }
   } catch (error) {
     console.error('[Pixabay Handler] Error:', error.message);
