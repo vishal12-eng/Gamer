@@ -61,6 +61,7 @@ Generates production builds with:
 
 ## Key Features
 - **AI-Powered Content**: Summarization, translation, text-to-speech, image generation
+- **AI Article Expansion**: Auto-expands short articles to 800-1500+ words with SEO structure
 - **Article Management**: Admin dashboard for creating and editing articles
 - **Bookmarks**: Save favorite articles locally
 - **Search**: Full-text article search with AI recommendations
