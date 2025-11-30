@@ -10,10 +10,12 @@ FutureTech Journal is an ultra-modern, AI-powered news and blog website built wi
 - **AI Backend**: Google Gemini API (via Netlify Functions)
 - **Styling**: Tailwind CSS with custom animations
 - **Deployment**: Netlify (with serverless functions)
+- **Ads**: A-ADS (Anonymous Ads) - Clean, Google-safe advertising
 
 ## Project Structure
 ```
 ├── components/          # React components (Header, Footer, Cards, etc.)
+│   ├── ads/            # A-ADS ad components
 │   └── icons/          # Icon components
 ├── pages/              # Page components (HomePage, ArticlePage, etc.)
 ├── services/           # API services (geminiService, authService)
@@ -35,6 +37,7 @@ FutureTech Journal is an ultra-modern, AI-powered news and blog website built wi
 
 ### 2. Environment Configuration
 - **GEMINI_API_KEY**: Already configured in Replit Secrets
+- **VITE_AADS_AD_UNIT_ID**: Your A-ADS ad unit ID for displaying ads
 - This enables all AI features (chatbot, content generation, image generation, etc.)
 
 ### 3. Running the Development Server
@@ -66,7 +69,7 @@ Generates production builds with:
 - **SEO Optimized**: Sitemap, robots.txt, meta tags
 - **Pixabay Integration**: Real images for articles (both cards and detail pages)
 - **Mailchimp Integration**: Newsletter subscription with email validation
-- **HilltopAds Banner Ads**: Clean affiliate banner ads with auto-rotation and responsive design
+- **A-ADS Integration**: Clean, Google-safe banner ads with responsive design
 
 ## Important Configuration Notes
 
@@ -116,43 +119,41 @@ When ready, use Replit's publish feature to create a live URL.
   - Newsletter form in footer with success/error messages
   - API key managed via Replit Secrets
 
-### HilltopAds Banner Integration
+### A-ADS (Anonymous Ads) Integration
 - **Location**: `components/ads/` directory
 - **Components**:
-  - `HilltopAd` - Reusable rotating banner component with 5 auto-rotating banners
-  - `ArticleInlineAd` - In-article ad placement (after 2nd paragraph)
-  - `StickyAd` - Sticky sidebar ad for desktop (doesn't overlap footer)
-  - `FeedAd` - Feed-style ad on homepage (after every 5 articles)
-  - `HilltopAdsProvider` - Global ad context provider
+  - `AAdsProvider` - Global ad context provider
+  - `AAdsBanner` - Responsive banner component with multiple sizes
+  - `AAdsInArticle` - In-article ad placement (after 2nd paragraph)
+  - `AAdsSidebar` - Sticky sidebar ad for desktop (screen width > 1024px)
+  - `AAdsFeed` - Feed-style ad on homepage (after every 4 articles)
+  - `AAdsBottom` - Bottom banner before footer
 - **Features**:
-  - 5 auto-rotating clean banners (4-6 second intervals)
-  - Smooth fade/slide animations
-  - Rounded corners with subtle shadows
-  - Hover zoom effects
-  - Dark mode adaptation (shadows/glow match theme)
-  - Mobile carousel with swipe support
-  - Lazy-loaded images for performance
-  - Image preloading for next/previous slides
-  - No layout shift (content-visibility optimization)
-  - No render blocking scripts (async/defer loading)
-  - Fail-safe: Falls back to placeholder banners if script fails
-  - No pop-ups or adult content
-  - 100% clean, safe ads for tech sites
+  - 100% Google-safe - no adult content, popups, or redirects
+  - No approval required to start
+  - Fully responsive design
+  - Dark/Light theme compatibility
+  - CLS-free (no layout shift) with skeleton loaders
+  - Lazy-loaded iframes for performance
+  - No render-blocking scripts
+  - Works on Netlify, Vercel, Cloudflare
+  - Clean, lightweight code
 - **Configuration**:
-  - `VITE_HILLTOPADS_ZONE_ID` - Your HilltopAds Zone ID (optional)
-  - `VITE_HILLTOPADS_NATIVE_ENABLED` - Set to 'true' to enable native HilltopAds SDK (default: false, uses fallback banners)
-  - Custom banners can be passed via `bannerList` prop
-- **Modes**:
-  - **Fallback Mode** (default): Shows rotating tech product banners with affiliate links
-  - **Native Mode**: Loads HilltopAds SDK when `VITE_HILLTOPADS_NATIVE_ENABLED=true` and zone ID is set
+  - `VITE_AADS_AD_UNIT_ID` - Your A-ADS ad unit ID (get from a-ads.com)
 - **Placements**:
-  - **Placement A**: Inside article (after 2nd paragraph) - centered and responsive
-  - **Placement B**: Desktop sidebar (sticky, doesn't overlap footer)
-  - **Placement C**: Homepage feed (after every 5 articles)
-- **Native Integration TODO** (when SDK docs available):
-  - Verify correct script URL pattern from HilltopAds documentation
-  - Implement container initialization API calls
-  - Test with live zone ID before enabling in production
+  - **Top Banner**: Homepage and article pages
+  - **In-Article**: After 2nd paragraph in article content
+  - **Sidebar**: Desktop only (sticky, doesn't overlap footer)
+  - **Feed**: Homepage after every 4 articles
+  - **Bottom**: Before footer on all pages
+- **Sizes Supported**:
+  - 728x90 (Leaderboard - desktop)
+  - 468x60 (Banner)
+  - 320x50 (Mobile Banner)
+  - 320x100 (Large Mobile Banner)
+  - 300x250 (Medium Rectangle)
+  - 336x280 (Large Rectangle)
+  - 300x600 (Half Page - sidebar)
 
 ## Troubleshooting
 
@@ -173,6 +174,11 @@ If you see "Blocked request. This host is not allowed":
 - Cache automatically clears every 15 minutes
 - Falls back to original image URL if Pixabay API fails
 - Check backend logs for Pixabay API errors
+
+### Ads Not Showing
+- Make sure `VITE_AADS_AD_UNIT_ID` is set in environment variables
+- Get your ad unit ID from a-ads.com
+- Ads are lazy-loaded, so scroll to see them appear
 
 ### Hot Module Replacement (HMR) Issues
 - HMR is configured for Replit's HTTPS proxy
@@ -209,14 +215,17 @@ npm run seo:generate
 - Optimized images and assets
 - Tailwind CSS purging (in production)
 - SEO-optimized caching headers
+- Lazy-loaded ad iframes
 
 ## Security Notes
 - GEMINI_API_KEY is stored securely in Replit Secrets
 - Never commit .env files to version control
 - Serverless functions handle API key securely (backend only)
+- A-ADS ad unit IDs are safe to expose (public identifiers)
 
 ## Next Steps
 1. Start the dev server: `npm run dev`
 2. View the website in Replit's preview
 3. Explore pages like `/`, `/about`, `/ai-tools`
 4. For full AI features, deploy to Netlify or run `npx netlify dev`
+5. Get your A-ADS ad unit ID from a-ads.com and set `VITE_AADS_AD_UNIT_ID`

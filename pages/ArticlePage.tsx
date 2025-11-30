@@ -216,7 +216,7 @@ const ArticlePage: React.FC = () => {
   const [isExpanding, setIsExpanding] = useState(false);
 
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [summary, setSummary] = useState('');
+  const [_summary, setSummary] = useState('');
   
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedContent, setTranslatedContent] = useState('');
