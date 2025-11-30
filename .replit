@@ -92,3 +92,8 @@ externalPort = 8080
 [[ports]]
 localPort = 44739
 externalPort = 8000
+
+[userenv]
+
+[userenv.shared]
+VITE_ADSTERRA_SMARTLINK_ID = "28060574"
