@@ -13,7 +13,6 @@ const AAdsSidebar: React.FC<AAdsSidebarProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [isNearFooter, setIsNearFooter] = useState(false);
-  const [canClose, setCanClose] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const adUnitId = import.meta.env.VITE_AADS_AD_UNIT_ID || '';
@@ -58,14 +57,13 @@ const AAdsSidebar: React.FC<AAdsSidebarProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleClose = () => {
-    setCanClose(false);
-  };
-
   const isDarkMode = typeof document !== 'undefined' && 
     document.documentElement.classList.contains('dark');
 
-  if (!isDesktop || !canClose || !adUnitId) {
+  const size = '160x600';
+  const dimensions = { width: 160, height: 600 };
+
+  if (!isDesktop || !adUnitId) {
     return null;
   }
 
@@ -87,8 +85,8 @@ const AAdsSidebar: React.FC<AAdsSidebarProps> = ({
                 : 'bg-white border border-gray-200'
             }`}
             style={{
-              width: 300,
-              height: 600
+              width: dimensions.width,
+              height: dimensions.height
             }}
           >
             {!isLoaded && (
@@ -102,7 +100,7 @@ const AAdsSidebar: React.FC<AAdsSidebarProps> = ({
             {isVisible && (
               <iframe
                 data-aa={adUnitId}
-                src={`//ad.a-ads.com/${adUnitId}?size=300x600`}
+                src={`https://ad.a-ads.com/${adUnitId}?size=${size}`}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -128,18 +126,6 @@ const AAdsSidebar: React.FC<AAdsSidebarProps> = ({
               Ad
             </div>
           </div>
-          
-          <button
-            onClick={handleClose}
-            className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-sm transition-colors z-30 ${
-              isDarkMode 
-                ? 'bg-gray-800 hover:bg-gray-700 text-white' 
-                : 'bg-gray-300 hover:bg-gray-400 text-gray-800'
-            }`}
-            aria-label="Close ad"
-          >
-            ×
-          </button>
         </div>
       </div>
     </div>

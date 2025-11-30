@@ -11,7 +11,7 @@ import { HomePageSkeleton } from '../components/SkeletonLoader';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import SEO from '../components/SEO';
 import { generateOrganizationSchema, generateWebsiteSchema } from '../utils/seoHelpers';
-import { AAdsFeed, AAdsBanner } from '../components/ads';
+import { AAdsFeed, AAdsTopBanner } from '../components/ads';
 
 const ARTICLES_PER_PAGE = 6;
 
@@ -87,7 +87,7 @@ const HomePage: React.FC = () => {
       </section>
 
       <div className="flex justify-center">
-        <AAdsBanner size="728x90" className="my-4" />
+        <AAdsTopBanner className="my-4" />
       </div>
 
       <TrendingTicker articles={articles} />

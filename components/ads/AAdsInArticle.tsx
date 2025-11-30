@@ -7,16 +7,8 @@ interface AAdsInArticleProps {
 const AAdsInArticle: React.FC<AAdsInArticleProps> = ({ className = '' }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const adUnitId = import.meta.env.VITE_AADS_AD_UNIT_ID || '';
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -38,10 +30,8 @@ const AAdsInArticle: React.FC<AAdsInArticleProps> = ({ className = '' }) => {
   const isDarkMode = typeof document !== 'undefined' && 
     document.documentElement.classList.contains('dark');
 
-  const size = isMobile ? '320x100' : '728x90';
-  const dimensions = isMobile 
-    ? { width: 320, height: 100 } 
-    : { width: 728, height: 90 };
+  const size = '300x250';
+  const dimensions = { width: 300, height: 250 };
 
   if (!adUnitId) {
     return null;
@@ -50,10 +40,11 @@ const AAdsInArticle: React.FC<AAdsInArticleProps> = ({ className = '' }) => {
   return (
     <div 
       ref={containerRef}
-      className={`my-8 ${className}`}
+      id="article-content-ad"
+      className={`my-8 flex justify-center ${className}`}
     >
       <div 
-        className={`p-4 rounded-2xl ${
+        className={`relative p-4 rounded-2xl ${
           isDarkMode 
             ? 'bg-gray-900/50 border border-gray-800' 
             : 'bg-gray-50 border border-gray-200'
@@ -68,11 +59,10 @@ const AAdsInArticle: React.FC<AAdsInArticleProps> = ({ className = '' }) => {
         </div>
         
         <div
-          className="relative overflow-hidden rounded-lg mx-auto"
+          className="relative overflow-hidden rounded-lg"
           style={{
-            width: '100%',
-            maxWidth: dimensions.width,
-            aspectRatio: `${dimensions.width}/${dimensions.height}`
+            width: dimensions.width,
+            height: dimensions.height,
           }}
         >
           {!isLoaded && (
@@ -86,7 +76,7 @@ const AAdsInArticle: React.FC<AAdsInArticleProps> = ({ className = '' }) => {
           {isVisible && (
             <iframe
               data-aa={adUnitId}
-              src={`//ad.a-ads.com/${adUnitId}?size=${size}`}
+              src={`https://ad.a-ads.com/${adUnitId}?size=${size}`}
               style={{
                 width: '100%',
                 height: '100%',

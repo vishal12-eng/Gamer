@@ -96,4 +96,4 @@ externalPort = 8000
 [userenv]
 
 [userenv.shared]
-VITE_AADS_AD_UNIT_ID = "your-aads-unit-id-here"
+VITE_AADS_AD_UNIT_ID = "2419015"

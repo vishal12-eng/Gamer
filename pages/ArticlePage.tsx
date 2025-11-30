@@ -37,7 +37,7 @@ import { slugify } from '../utils/slugify';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import Feedback from '../components/Feedback';
 import SEO from '../components/SEO';
-import { AAdsInArticle, AAdsSidebar } from '../components/ads';
+import { AAdsInArticle, AAdsSidebar, AAdsTopBanner } from '../components/ads';
 import { splitContentWithAd } from '../utils/articleAdInjector';
 
 // Helper for TTS
@@ -565,6 +565,10 @@ const ArticlePage: React.FC = () => {
           </div>
         </header>
 
+        <div className="flex justify-center my-6">
+          <AAdsTopBanner className="mb-4" />
+        </div>
+
         <div className="my-6 border-y border-gray-200 dark:border-gray-700 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center flex-wrap gap-2">
             <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 mr-2">Share:</span>
@@ -632,7 +636,7 @@ const ArticlePage: React.FC = () => {
             })()}
           </div>
           
-          <aside className="hidden lg:block w-80 flex-shrink-0">
+          <aside className="hidden lg:block w-[176px] flex-shrink-0">
             <AAdsSidebar topOffset={100} />
           </aside>
         </div>

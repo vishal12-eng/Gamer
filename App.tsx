@@ -11,8 +11,7 @@ import { ArticleProvider } from './hooks/useArticles';
 import { HomePageSkeleton } from './components/SkeletonLoader';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AAdsProvider } from './components/ads';
-import { AAdsBottom } from './components/ads';
+import { AAdsProvider, StickyAAdsBanner } from './components/ads';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ArticlePage = lazy(() => import('./pages/ArticlePage'));
@@ -106,7 +105,7 @@ function App() {
                     </Routes>
                   </Suspense>
                 </main>
-                <AAdsBottom />
+                <StickyAAdsBanner />
                 <Chatbot />
                 <Footer />
                 <Toast message={toastMessage} onClose={closeToast} />
