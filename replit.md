@@ -121,39 +121,34 @@ When ready, use Replit's publish feature to create a live URL.
 
 ### A-ADS (Anonymous Ads) Integration
 - **Location**: `components/ads/` directory
+- **Ad Unit ID**: 2419015 (configured via `VITE_AADS_AD_UNIT_ID`)
+- **Mode**: No-verification mode using direct iframe embedding
 - **Components**:
   - `AAdsProvider` - Global ad context provider
-  - `AAdsBanner` - Responsive banner component with multiple sizes
-  - `AAdsInArticle` - In-article ad placement (after 2nd paragraph)
-  - `AAdsSidebar` - Sticky sidebar ad for desktop (screen width > 1024px)
-  - `AAdsFeed` - Feed-style ad on homepage (after every 4 articles)
-  - `AAdsBottom` - Bottom banner before footer
+  - `AAdsTopBanner` - Top banner (728x90 desktop / 320x50 mobile) for homepage and article pages
+  - `StickyAAdsBanner` - Sticky bottom banner with close button and 24h localStorage persistence
+  - `AAdsInArticle` - In-article ad (300x250) placement after 2nd paragraph
+  - `AAdsSidebar` - Sidebar ad (160x600) for desktop only (screen >= 1024px)
+  - `AAdsBanner` - Generic responsive banner component
+  - `AAdsFeed` - Feed-style ad for homepage article grid
+  - `AAdsBottom` - Bottom banner component
 - **Features**:
   - 100% Google-safe - no adult content, popups, or redirects
-  - No approval required to start
-  - Fully responsive design
+  - No approval/verification required - loads instantly
+  - Fully responsive design (auto-detects mobile/desktop)
   - Dark/Light theme compatibility
   - CLS-free (no layout shift) with skeleton loaders
   - Lazy-loaded iframes for performance
+  - Close button on sticky banner with localStorage state
   - No render-blocking scripts
-  - Works on Netlify, Vercel, Cloudflare
-  - Clean, lightweight code
-- **Configuration**:
-  - `VITE_AADS_AD_UNIT_ID` - Your A-ADS ad unit ID (get from a-ads.com)
+  - Works on Netlify, Vercel, Cloudflare, Replit
 - **Placements**:
-  - **Top Banner**: Homepage and article pages
-  - **In-Article**: After 2nd paragraph in article content
-  - **Sidebar**: Desktop only (sticky, doesn't overlap footer)
-  - **Feed**: Homepage after every 4 articles
-  - **Bottom**: Before footer on all pages
-- **Sizes Supported**:
-  - 728x90 (Leaderboard - desktop)
-  - 468x60 (Banner)
-  - 320x50 (Mobile Banner)
-  - 320x100 (Large Mobile Banner)
-  - 300x250 (Medium Rectangle)
-  - 336x280 (Large Rectangle)
-  - 300x600 (Half Page - sidebar)
+  - **Top Banner**: Homepage and article pages (728x90 / 320x50)
+  - **Sticky Bottom**: All pages globally with close button (728x90 / 320x50)
+  - **In-Article**: After 2nd paragraph in article content (300x250)
+  - **Sidebar**: Desktop article pages only (160x600)
+- **Configuration**:
+  - `VITE_AADS_AD_UNIT_ID=2419015` - Set in environment variables
 
 ## Troubleshooting
 
