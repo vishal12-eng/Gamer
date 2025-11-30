@@ -48,10 +48,24 @@ export const summarizeText = async (text: string): Promise<string> => {
   try {
     const result = await callAi("generateContent", {
       model: 'gemini-2.0-flash',
-      contents: `Summarize this in 3 sentences:\n\n${text}`,
+      contents: `You are a professional news summarizer. Create a clean, concise summary of this article in 3-5 short paragraphs.
+
+RULES:
+- Each paragraph should be 2-3 sentences maximum
+- Use simple, clear language (Grade 6-8 reading level)
+- Cover the main points: who, what, when, where, why
+- No bullet points or lists - just flowing paragraphs
+- Return ONLY the summary text, no HTML tags
+- Keep total length under 200 words
+
+ARTICLE:
+${text.substring(0, 4000)}
+
+SUMMARY:`,
     });
     return result.text || "Summary not available.";
   } catch (error) {
+    console.error("Summarize error:", error);
     return "Could not summarize.";
   }
 };
@@ -261,6 +275,50 @@ export const analyzeReadability = async (text: string) => {
         return result.text || JSON.stringify({ score: 70, interpretation: "Standard" });
     } catch (error) {
         return JSON.stringify({ score: 0, interpretation: "Analysis Unavailable" });
+    }
+};
+
+export const improveReadability = async (text: string): Promise<string> => {
+    try {
+        const result = await callAi("generateContent", {
+            model: 'gemini-2.0-flash',
+            contents: `You are an expert content editor. Rewrite this article to make it easier to read while keeping ALL facts and information intact.
+
+RULES:
+1. Target reading level: Grade 6-8 (simple English that anyone can understand)
+2. Use short sentences (15-20 words max per sentence)
+3. Break long paragraphs into shorter ones
+4. Replace complex words with simpler alternatives
+5. You can mix in simple Hindi words (Hinglish) where natural, like "yaar", "accha", "simple hai"
+6. Keep the same structure (headings stay as headings)
+7. Return VALID HTML with <p>, <h2>, <h3>, <ul>, <li> tags ONLY
+8. Do NOT add any new information - only simplify existing content
+9. Maintain the article's original meaning and tone
+10. Keep important technical terms but explain them in simple words
+
+ORIGINAL ARTICLE:
+${text.substring(0, 6000)}
+
+SIMPLIFIED VERSION (HTML):`,
+        });
+        
+        let content = result.text || text;
+        content = content
+            .replace(/```html\s*/gi, '')
+            .replace(/```\s*/g, '')
+            .trim();
+        
+        if (!content.startsWith('<')) {
+            const firstTagIndex = content.indexOf('<');
+            if (firstTagIndex > 0) {
+                content = content.substring(firstTagIndex);
+            }
+        }
+        
+        return content;
+    } catch (error) {
+        console.error("Readability improvement error:", error);
+        return text;
     }
 };
 

@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Article, Category } from '../types';
 import ReadingProgressBar from '../components/ReadingProgressBar';
 import ArticleCard from '../components/ArticleCard';
-import { summarizeText, translateText, generateTextToSpeech, suggestTags, analyzeReadability } from '../services/geminiService';
+import { summarizeText, translateText, suggestTags, analyzeReadability, improveReadability } from '../services/geminiService';
 import { expandArticleWithSEO, getExpandedArticleFromDB, saveExpandedArticleToDB } from '../services/articleExpansionService';
 import { fetchPixabayImage } from '../services/pixabayService';
 import { 
@@ -41,33 +41,14 @@ import SEO from '../components/SEO';
 import { AAdsInArticle, AAdsSidebar, AAdsTopBanner } from '../components/ads';
 import { splitContentWithAd } from '../utils/articleAdInjector';
 
-// Helper for TTS
-function decode(base64: string) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-async function decodeAudioData(data: Uint8Array, ctx: AudioContext): Promise<AudioBuffer> {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length;
-  const buffer = ctx.createBuffer(1, frameCount, 24000);
-  const channelData = buffer.getChannelData(0);
-  for (let i = 0; i < frameCount; i++) {
-    channelData[i] = dataInt16[i] / 32768.0;
-  }
-  return buffer;
-}
+// Web Speech API is used for TTS - no external dependencies needed
 
 interface FloatingAIToolbarProps {
   handlers: {
       handleSummarize: () => Promise<void>;
       handleTranslate: () => Promise<void>;
       handleReadAloud: () => Promise<void>;
+      handleStopReading: () => void;
       handleAnalyzeReadability: () => Promise<void>;
       handleSuggestTags: () => Promise<void>;
       handleCopyLink: () => void;
@@ -78,11 +59,15 @@ interface FloatingAIToolbarProps {
   state: {
       article: Article;
       isSummarizing: boolean;
+      showSummary: boolean;
       isTranslating: boolean;
       currentLanguage: 'English' | 'Hindi';
       isReading: boolean;
+      isPaused: boolean;
       audioSource: AudioBufferSourceNode | null;
       isAnalyzingReadability: boolean;
+      isImprovingReadability: boolean;
+      improvedContent: string | null;
       readability: { score: number; interpretation: string } | null;
       isSuggestingTags: boolean;
       isShareMenuOpen: boolean;
@@ -142,21 +127,38 @@ const FloatingAIToolbar: React.FC<FloatingAIToolbarProps> = ({
     <div className="hidden lg:flex fixed top-1/2 -translate-y-1/2 left-4 xl:left-8 z-40">
         <div className="p-2 space-y-2 bg-gray-900/50 backdrop-blur-lg border border-white/10 rounded-full flex flex-col items-center shadow-2xl">
             {/* Content Tools */}
-            <TooltipButton onClick={handlers.handleSummarize} disabled={state.isSummarizing} tooltip="Summarize Article">
-                <SummarizeIcon className="w-6 h-6 text-gray-300" />
+            <TooltipButton onClick={handlers.handleSummarize} disabled={state.isSummarizing} tooltip={state.showSummary ? "Hide Summary" : "Summarize Article"}>
+                <SummarizeIcon className={`w-6 h-6 ${state.showSummary ? 'text-cyan-400' : 'text-gray-300'}`} />
             </TooltipButton>
              <TooltipButton onClick={handlers.handleTranslate} disabled={state.isTranslating} tooltip={`Translate to ${state.currentLanguage === 'English' ? 'Hindi' : 'English'}`}>
                 <TranslateIcon className="w-6 h-6 text-gray-300" />
             </TooltipButton>
-            <TooltipButton onClick={handlers.handleReadAloud} disabled={state.isReading && !state.audioSource} tooltip={state.isReading ? 'Stop Reading' : 'Read Aloud'}>
-                <SpeakerIcon className="w-6 h-6 text-gray-300" />
-            </TooltipButton>
+            <div className="relative group flex items-center">
+              <button
+                onClick={state.isReading ? (state.isPaused ? handlers.handleReadAloud : handlers.handleReadAloud) : handlers.handleReadAloud}
+                className={`p-3 rounded-full transition-colors ${state.isReading ? 'bg-cyan-600 animate-pulse' : 'bg-gray-800/50 hover:bg-cyan-600'}`}
+              >
+                <SpeakerIcon className={`w-6 h-6 ${state.isReading ? 'text-white' : 'text-gray-300'}`} />
+              </button>
+              {state.isReading && (
+                <button 
+                  onClick={handlers.handleStopReading}
+                  className="absolute -right-1 -top-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center hover:bg-red-600"
+                  title="Stop"
+                >
+                  ×
+                </button>
+              )}
+              <span className="absolute left-full ml-4 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-50">
+                {state.isReading ? (state.isPaused ? 'Resume' : 'Pause') : 'Read Aloud'}
+              </span>
+            </div>
             
             <div className="w-8 h-px bg-gray-600 my-1"></div>
 
             {/* Analysis Tools */}
-            <TooltipButton onClick={handlers.handleAnalyzeReadability} disabled={state.isAnalyzingReadability} tooltip={state.readability ? `Readability: ${state.readability.interpretation} (${state.readability.score.toFixed(1)})` : 'Analyze Readability'}>
-                <ReadabilityIcon className="w-6 h-6 text-gray-300" />
+            <TooltipButton onClick={handlers.handleAnalyzeReadability} disabled={state.isImprovingReadability} tooltip={state.improvedContent ? 'Show Original' : (state.isImprovingReadability ? 'Improving...' : 'Improve Readability')}>
+                <ReadabilityIcon className={`w-6 h-6 ${state.improvedContent ? 'text-cyan-400' : 'text-gray-300'}`} />
             </TooltipButton>
              <TooltipButton onClick={handlers.handleSuggestTags} disabled={state.isSuggestingTags} tooltip={state.isSuggestingTags ? 'Thinking...' : 'Suggest Tags'}>
                 <TagIcon className="w-6 h-6 text-gray-300" />
@@ -217,15 +219,20 @@ const ArticlePage: React.FC = () => {
   const [isExpanding, setIsExpanding] = useState(false);
 
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [_summary, setSummary] = useState('');
+  const [summary, setSummary] = useState('');
+  const [showSummary, setShowSummary] = useState(false);
   
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedContent, setTranslatedContent] = useState('');
   const [currentLanguage, setCurrentLanguage] = useState<'English' | 'Hindi'>('English');
 
   const [isReading, setIsReading] = useState(false);
-  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
-  const [audioSource, setAudioSource] = useState<AudioBufferSourceNode | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [audioSource] = useState<AudioBufferSourceNode | null>(null);
+  const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  
+  const [isImprovingReadability, setIsImprovingReadability] = useState(false);
+  const [improvedContent, setImprovedContent] = useState<string | null>(null);
 
   const [articleReadingMode, setArticleReadingMode] = useState<'dark' | 'light'>('dark');
 
@@ -251,16 +258,22 @@ const ArticlePage: React.FC = () => {
 
       // Reset all state on article change
       setSummary('');
+      setShowSummary(false);
       setTranslatedContent('');
       setCurrentLanguage('English');
       setArticleReadingMode('dark');
       setSuggestedTags([]);
       setReadability(null);
       setIsShareMenuOpen(false);
-      if (audioSource) {
-        audioSource.stop();
-        setAudioSource(null);
+      setImprovedContent(null);
+      setIsPaused(false);
+      
+      // Stop any playing audio (Web Speech API)
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
       }
+      setIsReading(false);
+      
       setExpandedContent(null);
       setIsExpanding(false);
 
@@ -389,11 +402,28 @@ const ArticlePage: React.FC = () => {
 
   const handleSummarize = async () => {
     if (!article) return;
+    
+    // If already showing summary, hide it
+    if (showSummary && summary) {
+      setShowSummary(false);
+      return;
+    }
+    
     setIsSummarizing(true);
     setSummary('');
-    const result = await summarizeText(contentForProcessing);
-    setSummary(result);
-    setIsSummarizing(false);
+    setShowSummary(false);
+    
+    try {
+      const result = await summarizeText(contentForProcessing);
+      setSummary(result);
+      setShowSummary(true);
+    } catch (error) {
+      console.error("Summarize failed:", error);
+      setSummary("Could not generate summary. Please try again.");
+      setShowSummary(true);
+    } finally {
+      setIsSummarizing(false);
+    }
   };
   
   const handleTranslate = async () => {
@@ -407,31 +437,88 @@ const ArticlePage: React.FC = () => {
     setIsTranslating(false);
   };
   
-   const handleReadAloud = async () => {
+  const handleReadAloud = async () => {
     if (!article) return;
-    if (isReading && audioSource) {
-      audioSource.stop();
-      setIsReading(false);
-      setAudioSource(null);
+    
+    // SSR safety check
+    if (typeof window === 'undefined') return;
+    
+    const synth = window.speechSynthesis;
+    
+    // If currently reading, handle pause/resume/stop
+    if (isReading) {
+      if (isPaused) {
+        // Resume
+        synth.resume();
+        setIsPaused(false);
+      } else {
+        // Pause
+        synth.pause();
+        setIsPaused(true);
+      }
       return;
     }
-    setIsReading(true);
-    const textToRead = contentForProcessing.replace(/<[^>]+>/g, '').substring(0, 1000);
-    const audioData = await generateTextToSpeech(textToRead);
-    if (audioData) {
-      const ctx = audioContext || new (window.AudioContext || (window as any).webkitAudioContext)();
-      setAudioContext(ctx);
-      const decodedData = decode(audioData);
-      const buffer = await decodeAudioData(decodedData, ctx);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.onended = () => setIsReading(false);
-      source.start();
-      setAudioSource(source);
-    } else {
-      setIsReading(false);
+    
+    // Stop any previous speech
+    synth.cancel();
+    
+    // Get clean text to read (strip HTML, limit length for better performance)
+    const textToRead = contentForProcessing
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 5000);
+    
+    if (!textToRead) {
+      console.error("No text to read");
+      return;
     }
+    
+    // Use Web Speech API (works on all browsers, mobile and desktop)
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    // Try to get a good English voice
+    const voices = synth.getVoices();
+    const englishVoice = voices.find(v => 
+      v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Natural'))
+    ) || voices.find(v => v.lang.startsWith('en'));
+    
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+    
+    utterance.onstart = () => {
+      setIsReading(true);
+      setIsPaused(false);
+    };
+    
+    utterance.onend = () => {
+      setIsReading(false);
+      setIsPaused(false);
+      speechSynthRef.current = null;
+    };
+    
+    utterance.onerror = (event) => {
+      console.error("Speech synthesis error:", event.error);
+      setIsReading(false);
+      setIsPaused(false);
+    };
+    
+    speechSynthRef.current = utterance;
+    setIsReading(true);
+    synth.speak(utterance);
+  };
+
+  const handleStopReading = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setIsReading(false);
+    setIsPaused(false);
+    speechSynthRef.current = null;
   };
 
   const handleSuggestTags = async () => {
@@ -453,21 +540,32 @@ const ArticlePage: React.FC = () => {
 
   const handleAnalyzeReadability = async () => {
     if (!article) return;
+    
+    // If already improved, toggle back to original
+    if (improvedContent) {
+      setImprovedContent(null);
+      return;
+    }
+    
+    setIsImprovingReadability(true);
     setIsAnalyzingReadability(true);
-    setReadability(null);
+    
     try {
-        const resultJson = await analyzeReadability(contentForProcessing);
-        const result = JSON.parse(resultJson);
-        if (result.score && result.interpretation) {
-            setReadability(result);
-        } else {
-            setReadability({ score: 0, interpretation: 'Analysis failed.' });
-        }
+      const improved = await improveReadability(contentForProcessing);
+      setImprovedContent(improved);
+      
+      // Also analyze the readability score
+      const resultJson = await analyzeReadability(improved);
+      const result = JSON.parse(resultJson);
+      if (result.score && result.interpretation) {
+        setReadability(result);
+      }
     } catch (error) {
-        console.error("Failed to parse readability score:", error);
-        setReadability({ score: 0, interpretation: 'Analysis failed.' });
+      console.error("Failed to improve readability:", error);
+      setReadability({ score: 0, interpretation: 'Improvement failed.' });
     } finally {
-        setIsAnalyzingReadability(false);
+      setIsAnalyzingReadability(false);
+      setIsImprovingReadability(false);
     }
   };
 
@@ -521,14 +619,16 @@ const ArticlePage: React.FC = () => {
 
   const handlers = {
       handleSummarize, handleTranslate, handleReadAloud,
+      handleStopReading,
       handleAnalyzeReadability, handleSuggestTags,
       handleCopyLink, handleBookmark,
       setIsShareMenuOpen, setArticleReadingMode
   };
 
   const state = {
-      article, isSummarizing, isTranslating, currentLanguage,
-      isReading, audioSource, isAnalyzingReadability,
+      article, isSummarizing, showSummary, isTranslating, currentLanguage,
+      isReading, isPaused, audioSource, isAnalyzingReadability,
+      isImprovingReadability, improvedContent,
       readability, isSuggestingTags, isShareMenuOpen,
       isBookmarked, articleReadingMode
   };
@@ -626,17 +726,107 @@ const ArticlePage: React.FC = () => {
             </div>
         )}
 
+        {/* Summary Box with Fade Animation */}
+        {showSummary && (
+          <div className="mb-6 p-6 bg-gradient-to-r from-cyan-900/30 to-blue-900/30 border border-cyan-500/30 rounded-xl animate-fadeIn">
+            <div className="flex items-center mb-4">
+              <SummarizeIcon className="w-6 h-6 text-cyan-400 mr-2" />
+              <h3 className="text-lg font-bold text-cyan-300">Quick Summary</h3>
+              <button 
+                onClick={() => setShowSummary(false)}
+                className="ml-auto text-gray-400 hover:text-white p-1"
+              >
+                ×
+              </button>
+            </div>
+            {isSummarizing ? (
+              <div className="flex items-center space-x-2 text-gray-300">
+                <div className="animate-spin w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
+                <span>Generating summary...</span>
+              </div>
+            ) : (
+              <div className="text-gray-200 leading-relaxed whitespace-pre-wrap">
+                {summary}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TTS Waveform Animation */}
+        {isReading && (
+          <div className="mb-4 p-4 bg-cyan-900/20 border border-cyan-500/30 rounded-lg flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <div 
+                    key={i}
+                    className="w-1 bg-cyan-400 rounded-full animate-pulse"
+                    style={{ 
+                      height: `${12 + Math.random() * 16}px`,
+                      animationDelay: `${i * 0.1}s`,
+                      animationDuration: '0.5s'
+                    }}
+                  />
+                ))}
+              </div>
+              <span className="text-cyan-300 text-sm font-medium">
+                {isPaused ? 'Paused' : 'Reading aloud...'}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={handleReadAloud}
+                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-sm rounded-full transition-colors"
+              >
+                {isPaused ? '▶ Resume' : '⏸ Pause'}
+              </button>
+              <button 
+                onClick={handleStopReading}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-full transition-colors"
+              >
+                ⏹ Stop
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Improved Readability Notice */}
+        {improvedContent && (
+          <div className="mb-4 p-3 bg-green-900/20 border border-green-500/30 rounded-lg flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <ReadabilityIcon className="w-5 h-5 text-green-400" />
+              <span className="text-green-300 text-sm">
+                Showing simplified version (Grade 6-8 reading level)
+                {readability && ` • Score: ${readability.score.toFixed(0)}`}
+              </span>
+            </div>
+            <button 
+              onClick={() => setImprovedContent(null)}
+              className="text-gray-400 hover:text-white px-2 py-1 text-sm"
+            >
+              Show Original
+            </button>
+          </div>
+        )}
+
+        {isImprovingReadability && (
+          <div className="mb-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg flex items-center space-x-2">
+            <div className="animate-spin w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full"></div>
+            <span className="text-blue-300 text-sm">Improving readability...</span>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
             {(() => {
-              const content = translatedContent || expandedContent || article.content;
+              const content = translatedContent || improvedContent || expandedContent || article.content;
               const { before, after } = splitContentWithAd(content, 2);
               
               return (
                 <>
                   <div
                     itemProp="articleBody"
-                    className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding ? 'typing-cursor' : ''}`}
+                    className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding || isImprovingReadability ? 'typing-cursor' : ''}`}
                     dangerouslySetInnerHTML={{ __html: before }}
                   />
                   
@@ -644,7 +834,7 @@ const ArticlePage: React.FC = () => {
                   
                   {after && (
                     <div
-                      className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding ? 'typing-cursor' : ''}`}
+                      className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding || isImprovingReadability ? 'typing-cursor' : ''}`}
                       dangerouslySetInnerHTML={{ __html: after }}
                     />
                   )}
@@ -690,20 +880,36 @@ const ArticlePage: React.FC = () => {
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <MobileToolButton onClick={handleSummarize} disabled={isSummarizing}>
-              <SummarizeIcon className="w-7 h-7" />
-              <span className="text-xs font-semibold">{isSummarizing ? 'Working...' : 'Summarize'}</span>
+              <SummarizeIcon className={`w-7 h-7 ${showSummary ? 'text-cyan-400' : ''}`} />
+              <span className="text-xs font-semibold">{isSummarizing ? 'Working...' : (showSummary ? 'Hide Summary' : 'Summarize')}</span>
             </MobileToolButton>
             <MobileToolButton onClick={handleTranslate} disabled={isTranslating}>
               <TranslateIcon className="w-7 h-7" />
               <span className="text-xs font-semibold">{isTranslating ? 'Translating...' : `To ${currentLanguage === 'English' ? 'Hindi' : 'English'}`}</span>
             </MobileToolButton>
-            <MobileToolButton onClick={handleReadAloud} disabled={isReading && !audioSource}>
+            <button
+              onClick={isReading ? (isPaused ? handleReadAloud : handleReadAloud) : handleReadAloud}
+              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg text-center transition-colors ${isReading ? 'bg-cyan-600 animate-pulse' : 'bg-gray-800/50 hover:bg-gray-700/50'} text-gray-200`}
+            >
               <SpeakerIcon className="w-7 h-7" />
-              <span className="text-xs font-semibold">{isReading ? 'Stop' : 'Read Aloud'}</span>
-            </MobileToolButton>
-            <MobileToolButton onClick={handleAnalyzeReadability} disabled={isAnalyzingReadability}>
-                <ReadabilityIcon className="w-7 h-7" />
-                <span className="text-xs font-semibold">{isAnalyzingReadability ? 'Analyzing...' : 'Readability'}</span>
+              <span className="text-xs font-semibold">
+                {isReading ? (isPaused ? 'Resume' : 'Pause') : 'Read Aloud'}
+              </span>
+            </button>
+            {isReading && (
+              <button
+                onClick={handleStopReading}
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-red-600 hover:bg-red-700 rounded-lg text-center text-white transition-colors"
+              >
+                <span className="text-xl">⏹</span>
+                <span className="text-xs font-semibold">Stop</span>
+              </button>
+            )}
+            <MobileToolButton onClick={handleAnalyzeReadability} disabled={isImprovingReadability}>
+              <ReadabilityIcon className={`w-7 h-7 ${improvedContent ? 'text-cyan-400' : ''}`} />
+              <span className="text-xs font-semibold">
+                {isImprovingReadability ? 'Improving...' : (improvedContent ? 'Original' : 'Simplify')}
+              </span>
             </MobileToolButton>
           </div>
         </div>
