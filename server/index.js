@@ -16,7 +16,7 @@ const corsHeaders = {
 
 app.post('/api/aiHandler', async (req, res) => {
   try {
-    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error('Server Error: Missing API_KEY');
       return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
@@ -327,7 +327,7 @@ app.post('/api/mailchimpSubscribe', async (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Backend Server] Running on http://0.0.0.0:${PORT}`);
-  console.log(`[Backend Server] API Key available: ${!!(process.env.API_KEY || process.env.GEMINI_API_KEY)}`);
+  console.log(`[Backend Server] API Key available: ${!!(process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY)}`);
   console.log(`[Backend Server] Pixabay Key available: ${!!process.env.PIXABAY_API_KEY}`);
   console.log(`[Backend Server] Mailchimp Key available: ${!!process.env.MAILCHIMP_API_KEY}`);
 });
