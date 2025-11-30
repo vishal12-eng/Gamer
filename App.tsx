@@ -1,5 +1,5 @@
 
-import React, { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Header from './components/Header';
@@ -11,6 +11,7 @@ import { ArticleProvider } from './hooks/useArticles';
 import { HomePageSkeleton } from './components/SkeletonLoader';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { CuelinksProvider } from './components/ads';
 
 // Lazy-loaded page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -46,9 +47,10 @@ function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <ToastContext.Provider value={{ showToast }}>
-          <ArticleProvider>
-            <HashRouter>
+        <CuelinksProvider>
+          <ToastContext.Provider value={{ showToast }}>
+            <ArticleProvider>
+              <HashRouter>
               <div className="flex flex-col min-h-screen font-sans bg-gray-100 dark:bg-transparent transition-colors duration-500">
                 <Header />
                 <main className="flex-grow container mx-auto px-4 py-8 pt-24">
@@ -115,9 +117,10 @@ function App() {
                 <Footer />
                 <Toast message={toastMessage} onClose={closeToast} />
               </div>
-            </HashRouter>
-          </ArticleProvider>
-        </ToastContext.Provider>
+              </HashRouter>
+            </ArticleProvider>
+          </ToastContext.Provider>
+        </CuelinksProvider>
       </AuthProvider>
     </HelmetProvider>
   );

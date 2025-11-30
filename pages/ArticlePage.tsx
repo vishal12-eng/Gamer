@@ -41,6 +41,8 @@ import { slugify } from '../utils/slugify';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import Feedback from '../components/Feedback';
 import SEO from '../components/SEO';
+import { ArticleInlineAd, StickyAd } from '../components/ads';
+import { splitContentWithAd } from '../utils/articleAdInjector';
 
 // Helper for TTS
 function decode(base64: string) {
@@ -607,13 +609,37 @@ const ArticlePage: React.FC = () => {
             </div>
         )}
 
-        <div
-          itemProp="articleBody"
-          className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding ? 'typing-cursor' : ''}`}
-          dangerouslySetInnerHTML={{ 
-            __html: translatedContent || expandedContent || article.content 
-          }}
-        />
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1">
+            {(() => {
+              const content = translatedContent || expandedContent || article.content;
+              const { before, after } = splitContentWithAd(content, 2);
+              
+              return (
+                <>
+                  <div
+                    itemProp="articleBody"
+                    className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding ? 'typing-cursor' : ''}`}
+                    dangerouslySetInnerHTML={{ __html: before }}
+                  />
+                  
+                  {after && <ArticleInlineAd />}
+                  
+                  {after && (
+                    <div
+                      className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding ? 'typing-cursor' : ''}`}
+                      dangerouslySetInnerHTML={{ __html: after }}
+                    />
+                  )}
+                </>
+              );
+            })()}
+          </div>
+          
+          <aside className="hidden lg:block w-80 flex-shrink-0">
+            <StickyAd topOffset={100} />
+          </aside>
+        </div>
 
         {suggestedTags.length > 0 && (
           <AiFeatureBox
