@@ -1,6 +1,6 @@
 import React from 'react';
 import SmartAd, { BannerItem } from './SmartAd';
-import { useCuelinks } from './CuelinksProvider';
+import { useAdsterra } from './AdsterraProvider';
 
 interface ArticleInlineAdProps {
   bannerList?: BannerItem[];
@@ -11,7 +11,7 @@ const ArticleInlineAd: React.FC<ArticleInlineAdProps> = ({
   bannerList,
   className = ''
 }) => {
-  const { hasError } = useCuelinks();
+  const { hasError } = useAdsterra();
   const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
 
   return (

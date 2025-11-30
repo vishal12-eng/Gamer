@@ -75,6 +75,20 @@ const defaultBanners: BannerItem[] = [
     altText: 'Smart Watch Display',
     link: '#',
     title: 'Wearable Tech'
+  },
+  {
+    id: 'banner-9',
+    imageUrl: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&q=80',
+    altText: 'Laptop Setup',
+    link: '#',
+    title: 'Work From Home'
+  },
+  {
+    id: 'banner-10',
+    imageUrl: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80',
+    altText: 'Gaming Headset',
+    link: '#',
+    title: 'Gaming Accessories'
   }
 ];
 
@@ -100,6 +114,7 @@ const SmartAd: React.FC<SmartAdProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState<Set<number>>(new Set([0]));
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -124,29 +139,46 @@ const SmartAd: React.FC<SmartAdProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  const preloadNextImages = useCallback((currentIdx: number) => {
+    const nextIdx = (currentIdx + 1) % banners.length;
+    const prevIdx = (currentIdx - 1 + banners.length) % banners.length;
+    
+    setImagesLoaded(prev => {
+      const newSet = new Set(prev);
+      newSet.add(nextIdx);
+      newSet.add(prevIdx);
+      return newSet;
+    });
+  }, [banners.length]);
+
   const goToNext = useCallback(() => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev + 1) % banners.length);
+    const nextIndex = (currentIndex + 1) % banners.length;
+    setCurrentIndex(nextIndex);
+    preloadNextImages(nextIndex);
     setTimeout(() => setIsTransitioning(false), 500);
-  }, [banners.length, isTransitioning]);
+  }, [banners.length, isTransitioning, currentIndex, preloadNextImages]);
 
   const goToPrev = useCallback(() => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
+    const prevIndex = (currentIndex - 1 + banners.length) % banners.length;
+    setCurrentIndex(prevIndex);
+    preloadNextImages(prevIndex);
     setTimeout(() => setIsTransitioning(false), 500);
-  }, [banners.length, isTransitioning]);
+  }, [banners.length, isTransitioning, currentIndex, preloadNextImages]);
 
   const goToSlide = useCallback((index: number) => {
     if (isTransitioning || index === currentIndex) return;
     setIsTransitioning(true);
     setCurrentIndex(index);
+    preloadNextImages(index);
     setTimeout(() => setIsTransitioning(false), 500);
-  }, [currentIndex, isTransitioning]);
+  }, [currentIndex, isTransitioning, preloadNextImages]);
 
   useEffect(() => {
-    if (!isPaused && !isMobile) {
+    if (!isPaused) {
       intervalRef.current = setInterval(goToNext, animationSpeed);
     }
     return () => {
@@ -154,7 +186,11 @@ const SmartAd: React.FC<SmartAdProps> = ({
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPaused, animationSpeed, goToNext, isMobile]);
+  }, [isPaused, animationSpeed, goToNext]);
+
+  useEffect(() => {
+    preloadNextImages(0);
+  }, [preloadNextImages]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
@@ -184,12 +220,14 @@ const SmartAd: React.FC<SmartAdProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`smart-ad-container relative overflow-hidden select-none ${className}`}
+      className={`smart-ad-container relative overflow-hidden select-none group ${className}`}
       style={{
         width: isMobile ? '100%' : dimensions.width,
         height: isMobile ? 'auto' : dimensions.height,
         aspectRatio: isMobile ? (variant === 'vertical' ? '1/2' : '16/9') : undefined,
-        minHeight: isMobile ? '200px' : undefined
+        minHeight: isMobile ? '200px' : undefined,
+        contentVisibility: 'auto',
+        containIntrinsicSize: isMobile ? 'auto 200px' : `${dimensions.width}px ${dimensions.height}px`
       }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -229,7 +267,7 @@ const SmartAd: React.FC<SmartAdProps> = ({
                 transition-all duration-500 ease-in-out
                 ${index === currentIndex 
                   ? 'opacity-100 scale-100 z-10' 
-                  : 'opacity-0 scale-105 z-0'
+                  : 'opacity-0 scale-105 z-0 pointer-events-none'
                 }
               `}
               style={{
@@ -239,21 +277,26 @@ const SmartAd: React.FC<SmartAdProps> = ({
                     ? 'scale(1.05) translateX(10%)' 
                     : 'scale(1.05) translateX(-10%)'
               }}
+              aria-hidden={index !== currentIndex}
+              tabIndex={index === currentIndex ? 0 : -1}
             >
-              <img
-                src={banner.imageUrl}
-                alt={banner.altText}
-                loading={lazyLoad ? 'lazy' : 'eager'}
-                className={`
-                  w-full h-full object-cover rounded-xl
-                  transition-transform duration-300
-                  hover:scale-105
-                `}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 
-                    'https://via.placeholder.com/728x90?text=Ad+Space';
-                }}
-              />
+              {(imagesLoaded.has(index) || index === currentIndex) && (
+                <img
+                  src={banner.imageUrl}
+                  alt={banner.altText}
+                  loading={lazyLoad && index > 0 ? 'lazy' : 'eager'}
+                  decoding="async"
+                  className={`
+                    w-full h-full object-cover rounded-xl
+                    transition-transform duration-300
+                    hover:scale-105
+                  `}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 
+                      'https://via.placeholder.com/728x90?text=Sponsored+Content';
+                  }}
+                />
+              )}
               
               {showTitle && banner.title && (
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
@@ -268,13 +311,13 @@ const SmartAd: React.FC<SmartAdProps> = ({
 
         {isMobile && banners.length > 1 && (
           <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
-            {banners.map((_, index) => (
+            {banners.slice(0, 5).map((_, index) => (
               <button
                 key={index}
                 onClick={() => goToSlide(index)}
                 className={`
                   w-2 h-2 rounded-full transition-all duration-300
-                  ${index === currentIndex 
+                  ${index === currentIndex % 5 
                     ? 'bg-cyan-400 w-6' 
                     : 'bg-white/50 hover:bg-white/75'
                   }
@@ -289,7 +332,7 @@ const SmartAd: React.FC<SmartAdProps> = ({
           <>
             <button
               onClick={goToPrev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
               aria-label="Previous banner"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -298,7 +341,7 @@ const SmartAd: React.FC<SmartAdProps> = ({
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
               aria-label="Next banner"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

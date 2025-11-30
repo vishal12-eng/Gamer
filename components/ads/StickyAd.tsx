@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SmartAd, { BannerItem } from './SmartAd';
 
 interface StickyAdProps {
@@ -14,6 +14,8 @@ const StickyAd: React.FC<StickyAdProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isNearFooter, setIsNearFooter] = useState(false);
+  const stickyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -24,12 +26,34 @@ const StickyAd: React.FC<StickyAdProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const footer = document.querySelector('footer');
+      if (footer && stickyRef.current) {
+        const footerRect = footer.getBoundingClientRect();
+        const stickyRect = stickyRef.current.getBoundingClientRect();
+        const buffer = 50;
+        
+        if (footerRect.top <= stickyRect.bottom + buffer) {
+          setIsNearFooter(true);
+        } else {
+          setIsNearFooter(false);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   if (isMobile || !isVisible) return null;
 
   return (
     <div 
-      className={`sticky ${className}`}
-      style={{ top: topOffset }}
+      ref={stickyRef}
+      className={`${isNearFooter ? 'relative' : 'sticky'} ${className}`}
+      style={{ top: isNearFooter ? 'auto' : topOffset }}
     >
       <div className="relative">
         <SmartAd

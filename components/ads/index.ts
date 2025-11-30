@@ -4,4 +4,4 @@ export type { SmartAdProps, BannerItem } from './SmartAd';
 export { default as StickyAd } from './StickyAd';
 export { default as ArticleInlineAd } from './ArticleInlineAd';
 export { default as FeedAd } from './FeedAd';
-export { default as CuelinksProvider, useCuelinks } from './CuelinksProvider';
+export { default as AdsterraProvider, useAdsterra } from './AdsterraProvider';
