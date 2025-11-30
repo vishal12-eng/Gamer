@@ -63,6 +63,7 @@ const StickyAd: React.FC<StickyAdProps> = ({
           bannerList={bannerList}
           showTitle={true}
           animationSpeed={6000}
+          hilltopAdId="hilltop-sticky-ad"
         />
         <button
           onClick={() => setIsVisible(false)}

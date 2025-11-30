@@ -18,6 +18,7 @@ export interface HilltopAdProps {
   bannerList?: BannerItem[];
   className?: string;
   lazyLoad?: boolean;
+  hilltopAdId?: string;
 }
 
 const defaultBanners: BannerItem[] = [
@@ -72,7 +73,8 @@ const HilltopAd: React.FC<HilltopAdProps> = ({
   animationSpeed = 5000,
   bannerList,
   className = '',
-  lazyLoad = true
+  lazyLoad = true,
+  hilltopAdId
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -82,9 +84,10 @@ const HilltopAd: React.FC<HilltopAdProps> = ({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState<Set<number>>(new Set([0]));
   const containerRef = useRef<HTMLDivElement>(null);
+  const hilltopContainerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  useHilltopAds();
+  const { isLoaded, useFallback, zoneId, nativeEnabled } = useHilltopAds();
 
   const banners = bannerList || defaultBanners;
   
@@ -184,6 +187,46 @@ const HilltopAd: React.FC<HilltopAdProps> = ({
   };
 
   const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
+  if (!isLoaded) {
+    return (
+      <div
+        className={`hilltop-ad-container relative overflow-hidden ${className}`}
+        style={{
+          width: isMobile ? '100%' : dimensions.width,
+          height: isMobile ? 'auto' : dimensions.height,
+          minHeight: '90px'
+        }}
+      >
+        <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-xl w-full h-full" />
+      </div>
+    );
+  }
+
+  if (nativeEnabled && !useFallback && zoneId && hilltopAdId && window.hilltopads) {
+    return (
+      <div
+        ref={hilltopContainerRef}
+        id={hilltopAdId}
+        className={`hilltop-ad-native relative overflow-hidden rounded-xl ${className}`}
+        style={{
+          width: isMobile ? '100%' : dimensions.width,
+          height: isMobile ? 'auto' : dimensions.height,
+          minHeight: '90px'
+        }}
+        data-zone-id={zoneId}
+      >
+        <div 
+          className={`
+            absolute top-2 right-2 z-20 px-2 py-0.5 rounded text-[10px] font-medium
+            ${isDarkMode ? 'bg-gray-800/80 text-gray-400' : 'bg-gray-200/80 text-gray-600'}
+          `}
+        >
+          Ad
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

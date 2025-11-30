@@ -37,6 +37,7 @@ const ArticleInlineAd: React.FC<ArticleInlineAdProps> = ({
           bannerList={bannerList}
           showTitle={true}
           animationSpeed={5000}
+          hilltopAdId="hilltop-inline-ad"
         />
       </div>
     </div>

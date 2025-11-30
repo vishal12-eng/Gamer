@@ -48,6 +48,7 @@ const FeedAd: React.FC<FeedAdProps> = ({
               bannerList={bannerList}
               showTitle={true}
               animationSpeed={4000}
+              hilltopAdId="hilltop-feed-ad"
             />
           </div>
         </div>

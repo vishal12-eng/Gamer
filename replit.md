@@ -139,12 +139,20 @@ When ready, use Replit's publish feature to create a live URL.
   - No pop-ups or adult content
   - 100% clean, safe ads for tech sites
 - **Configuration**:
-  - Set `VITE_HILLTOPADS_ZONE_ID` environment variable with your HilltopAds Zone ID
+  - `VITE_HILLTOPADS_ZONE_ID` - Your HilltopAds Zone ID (optional)
+  - `VITE_HILLTOPADS_NATIVE_ENABLED` - Set to 'true' to enable native HilltopAds SDK (default: false, uses fallback banners)
   - Custom banners can be passed via `bannerList` prop
+- **Modes**:
+  - **Fallback Mode** (default): Shows rotating tech product banners with affiliate links
+  - **Native Mode**: Loads HilltopAds SDK when `VITE_HILLTOPADS_NATIVE_ENABLED=true` and zone ID is set
 - **Placements**:
   - **Placement A**: Inside article (after 2nd paragraph) - centered and responsive
   - **Placement B**: Desktop sidebar (sticky, doesn't overlap footer)
   - **Placement C**: Homepage feed (after every 5 articles)
+- **Native Integration TODO** (when SDK docs available):
+  - Verify correct script URL pattern from HilltopAds documentation
+  - Implement container initialization API calls
+  - Test with live zone ID before enabling in production
 
 ## Troubleshooting
 
