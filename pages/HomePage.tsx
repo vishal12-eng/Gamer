@@ -11,7 +11,6 @@ import { HomePageSkeleton } from '../components/SkeletonLoader';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import SEO from '../components/SEO';
 import { generateOrganizationSchema, generateWebsiteSchema } from '../utils/seoHelpers';
-import { AAdsFeed, AAdsTopBanner } from '../components/ads';
 
 const ARTICLES_PER_PAGE = 6;
 
@@ -86,10 +85,6 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      <div className="flex justify-center">
-        <AAdsTopBanner className="my-4" />
-      </div>
-
       <TrendingTicker articles={articles} />
 
       <section id="latest-articles">
@@ -98,13 +93,8 @@ const HomePage: React.FC = () => {
             <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">Latest Articles</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {currentArticles.map((article, index) => (
-            <React.Fragment key={article.slug}>
-              <ArticleCard article={article} />
-              {(index + 1) % 4 === 0 && index < currentArticles.length - 1 && (
-                <AAdsFeed />
-              )}
-            </React.Fragment>
+          {currentArticles.map((article) => (
+            <ArticleCard key={article.slug} article={article} />
           ))}
         </div>
         <Pagination
