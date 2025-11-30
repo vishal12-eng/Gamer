@@ -1,11 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAdObserver } from '../../hooks/useAdObserver';
+import { getVariant } from '../../lib/ads/abtest';
+import { canShowAds } from '../ConsentBanner';
+import AdFallback from './AdFallback';
 
 const AAdsTopBanner: React.FC<{ className?: string }> = ({ className = '' }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const adUnitId = import.meta.env.VITE_AADS_AD_UNIT_ID || '';
+  
+  const size = isMobile ? '320x50' : '728x90';
+  const dimensions = isMobile 
+    ? { width: 320, height: 50 } 
+    : { width: 728, height: 90 };
+
+  const {
+    isLoaded,
+    showFallback,
+    shouldRender,
+    containerRef,
+    handleLoad,
+    handleError,
+  } = useAdObserver({
+    placement: 'top-banner',
+    size,
+    variant: getVariant('sizeTest'),
+    fallbackTimeout: 5000,
+  });
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -14,35 +34,10 @@ const AAdsTopBanner: React.FC<{ className?: string }> = ({ className = '' }) => 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (!containerRef.current) {
-      setIsVisible(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px', threshold: 0.1 }
-    );
-
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   const isDarkMode = typeof document !== 'undefined' && 
     document.documentElement.classList.contains('dark');
 
-  const size = isMobile ? '320x50' : '728x90';
-  const dimensions = isMobile 
-    ? { width: 320, height: 50 } 
-    : { width: 728, height: 90 };
-
-  if (!adUnitId) {
+  if (!adUnitId || !canShowAds()) {
     return null;
   }
 
@@ -62,7 +57,7 @@ const AAdsTopBanner: React.FC<{ className?: string }> = ({ className = '' }) => 
           height: dimensions.height,
         }}
       >
-        {!isLoaded && (
+        {!isLoaded && !showFallback && (
           <div 
             className={`absolute inset-0 animate-pulse rounded-lg ${
               isDarkMode ? 'bg-gray-800' : 'bg-gray-200'
@@ -70,7 +65,9 @@ const AAdsTopBanner: React.FC<{ className?: string }> = ({ className = '' }) => 
           />
         )}
         
-        {isVisible && (
+        {showFallback ? (
+          <AdFallback width={dimensions.width} height={dimensions.height} type="newsletter" />
+        ) : shouldRender && (
           <iframe
             data-aa={adUnitId}
             src={`https://ad.a-ads.com/${adUnitId}?size=${size}`}
@@ -83,7 +80,8 @@ const AAdsTopBanner: React.FC<{ className?: string }> = ({ className = '' }) => 
               backgroundColor: 'transparent'
             }}
             loading="lazy"
-            onLoad={() => setIsLoaded(true)}
+            onLoad={handleLoad}
+            onError={handleError}
             title="Top Banner Advertisement"
             sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
           />

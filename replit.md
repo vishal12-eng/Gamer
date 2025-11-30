@@ -150,6 +150,20 @@ When ready, use Replit's publish feature to create a live URL.
 - **Configuration**:
   - `VITE_AADS_AD_UNIT_ID=2419015` - Set in environment variables
 
+### Post-Monetization Optimization
+- **Location**: `lib/ads/`, `hooks/useAdObserver.ts`, `components/ConsentBanner.tsx`
+- **Analytics Dashboard**: `/admin/ads` - View impressions, clicks, CTR, revenue
+- **Features**:
+  - Viewability tracking (50% visible for 1+ second)
+  - Safe ad refresh (max once per 30s)
+  - GDPR/CCPA consent banner with preferences
+  - A/B testing for placements, sizes, sticky behavior
+  - Fallback content for slow/failed ads
+  - Event batching (10 events or 30s)
+  - Admin kill switch and debug mode
+- **Smoke Test**: `node scripts/check-ads.js`
+- **Full Documentation**: See `docs/ADS_OPTIMIZATION.md`
+
 ## Troubleshooting
 
 ### "Blocked request" Error

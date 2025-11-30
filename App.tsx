@@ -12,6 +12,7 @@ import { HomePageSkeleton } from './components/SkeletonLoader';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AAdsProvider, StickyAAdsBanner } from './components/ads';
+import ConsentBanner from './components/ConsentBanner';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ArticlePage = lazy(() => import('./pages/ArticlePage'));
@@ -31,6 +32,7 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminArticleListPage = lazy(() => import('./pages/AdminArticleListPage'));
 const AdminArticleEditorPage = lazy(() => import('./pages/AdminArticleEditorPage'));
+const AdminAdsPage = lazy(() => import('./pages/AdminAdsPage'));
 
 function App() {
   const [toastMessage, setToastMessage] = useState('');
@@ -101,6 +103,14 @@ function App() {
                           </ProtectedRoute>
                         } 
                       />
+                      <Route 
+                        path="/admin/ads" 
+                        element={
+                          <ProtectedRoute>
+                            <AdminAdsPage />
+                          </ProtectedRoute>
+                        } 
+                      />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </Suspense>
@@ -108,6 +118,7 @@ function App() {
                 <StickyAAdsBanner />
                 <Chatbot />
                 <Footer />
+                <ConsentBanner />
                 <Toast message={toastMessage} onClose={closeToast} />
               </div>
               </HashRouter>

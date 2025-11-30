@@ -1,4 +1,5 @@
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useEffect } from 'react';
+import { initAnalytics } from '../../lib/ads/analytics';
 
 interface AAdsConfig {
   adUnitId: string;
@@ -21,6 +22,16 @@ export const AAdsProvider: React.FC<AAdsProviderProps> = ({ children }) => {
     adUnitId: import.meta.env.VITE_AADS_AD_UNIT_ID || '',
     isEnabled: Boolean(import.meta.env.VITE_AADS_AD_UNIT_ID)
   }), []);
+
+  useEffect(() => {
+    initAnalytics({
+      enabled: true,
+      batchSize: 10,
+      flushInterval: 30000,
+      endpoint: '/api/ads/event',
+      debug: import.meta.env.DEV,
+    });
+  }, []);
 
   const getAdUrl = (size?: string): string => {
     if (!config.adUnitId) return '';

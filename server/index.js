@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 
 const app = express();
@@ -7,6 +9,294 @@ const PORT = 3001;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// === AD ANALYTICS STORAGE ===
+const ADS_EVENTS_FILE = path.join(__dirname, 'ads_events.json');
+const ADS_CONFIG_FILE = path.join(__dirname, 'ads_config.json');
+
+// Rate limiting for ad events
+const rateLimiter = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMIT_MAX = 100; // max requests per window
+
+// Load events from file
+function loadAdEvents() {
+  try {
+    if (fs.existsSync(ADS_EVENTS_FILE)) {
+      return JSON.parse(fs.readFileSync(ADS_EVENTS_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.error('[Ads Analytics] Failed to load events:', e.message);
+  }
+  return [];
+}
+
+// Save events to file
+function saveAdEvents(events) {
+  try {
+    // Keep only last 7 days of events
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const recentEvents = events.filter(e => e.timestamp > sevenDaysAgo);
+    fs.writeFileSync(ADS_EVENTS_FILE, JSON.stringify(recentEvents, null, 2));
+  } catch (e) {
+    console.error('[Ads Analytics] Failed to save events:', e.message);
+  }
+}
+
+// Load ads config
+function loadAdsConfig() {
+  try {
+    if (fs.existsSync(ADS_CONFIG_FILE)) {
+      return JSON.parse(fs.readFileSync(ADS_CONFIG_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.error('[Ads Config] Failed to load config:', e.message);
+  }
+  return {
+    enabled: true,
+    verificationMode: false,
+    refreshEnabled: true,
+    debugMode: false,
+    baseline: { impressions: 0, clicks: 0, date: Date.now() }
+  };
+}
+
+// Save ads config
+function saveAdsConfig(config) {
+  try {
+    fs.writeFileSync(ADS_CONFIG_FILE, JSON.stringify(config, null, 2));
+  } catch (e) {
+    console.error('[Ads Config] Failed to save config:', e.message);
+  }
+}
+
+let adEvents = loadAdEvents();
+let adsConfig = loadAdsConfig();
+
+// Rate limit check
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const windowStart = now - RATE_LIMIT_WINDOW;
+  
+  if (!rateLimiter.has(ip)) {
+    rateLimiter.set(ip, []);
+  }
+  
+  const requests = rateLimiter.get(ip).filter(t => t > windowStart);
+  rateLimiter.set(ip, requests);
+  
+  if (requests.length >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  
+  requests.push(now);
+  return true;
+}
+
+// AD EVENTS ENDPOINT
+app.post('/api/ads/event', (req, res) => {
+  try {
+    const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    
+    if (!checkRateLimit(clientIP)) {
+      return res.status(429).json({ error: 'Rate limit exceeded' });
+    }
+    
+    const { sessionId, context, events } = req.body;
+    
+    if (!events || !Array.isArray(events)) {
+      return res.status(400).json({ error: 'Invalid events payload' });
+    }
+    
+    // Validate and store events
+    const validEvents = events.map(event => ({
+      ...event,
+      sessionId,
+      context: {
+        url: context?.url,
+        timestamp: context?.timestamp,
+      },
+      serverTimestamp: Date.now(),
+      ip: clientIP.split(',')[0].trim(),
+    })).filter(e => 
+      e.type && 
+      typeof e.timestamp === 'number' && 
+      e.placement
+    );
+    
+    adEvents.push(...validEvents);
+    
+    // Save to file periodically (every 50 events)
+    if (adEvents.length % 50 === 0) {
+      saveAdEvents(adEvents);
+    }
+    
+    console.log(`[Ads Analytics] Received ${validEvents.length} events from ${clientIP}`);
+    
+    res.json({ success: true, received: validEvents.length });
+  } catch (error) {
+    console.error('[Ads Analytics] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// AD STATS ENDPOINT
+app.get('/api/ads/stats', (req, res) => {
+  try {
+    const now = Date.now();
+    const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+    const oneDayAgo = now - (24 * 60 * 60 * 1000);
+    
+    const recentEvents = adEvents.filter(e => e.timestamp > sevenDaysAgo);
+    const last24hEvents = adEvents.filter(e => e.timestamp > oneDayAgo);
+    
+    // Calculate daily stats
+    const dailyStats = {};
+    for (let i = 0; i < 7; i++) {
+      const dayStart = now - ((i + 1) * 24 * 60 * 60 * 1000);
+      const dayEnd = now - (i * 24 * 60 * 60 * 1000);
+      const dayEvents = recentEvents.filter(e => e.timestamp > dayStart && e.timestamp <= dayEnd);
+      
+      const date = new Date(dayEnd).toISOString().split('T')[0];
+      dailyStats[date] = {
+        impressions: dayEvents.filter(e => e.type === 'ad_impression').length,
+        clicks: dayEvents.filter(e => e.type === 'ad_click').length,
+        closes: dayEvents.filter(e => e.type === 'ad_close').length,
+        refreshes: dayEvents.filter(e => e.type === 'ad_refresh').length,
+        viewable: dayEvents.filter(e => e.type === 'ad_viewable').length,
+      };
+    }
+    
+    // Calculate placement breakdown
+    const placements = {};
+    recentEvents.forEach(e => {
+      if (!placements[e.placement]) {
+        placements[e.placement] = { impressions: 0, clicks: 0, viewable: 0 };
+      }
+      if (e.type === 'ad_impression') placements[e.placement].impressions++;
+      if (e.type === 'ad_click') placements[e.placement].clicks++;
+      if (e.type === 'ad_viewable') placements[e.placement].viewable++;
+    });
+    
+    // Calculate variant performance
+    const variants = {};
+    recentEvents.filter(e => e.variant).forEach(e => {
+      const key = `${e.placement}:${e.variant}`;
+      if (!variants[key]) {
+        variants[key] = { impressions: 0, clicks: 0 };
+      }
+      if (e.type === 'ad_impression') variants[key].impressions++;
+      if (e.type === 'ad_click') variants[key].clicks++;
+    });
+    
+    // Summary stats
+    const totalImpressions = recentEvents.filter(e => e.type === 'ad_impression').length;
+    const totalClicks = recentEvents.filter(e => e.type === 'ad_click').length;
+    const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : 0;
+    
+    // Estimated RPM (conservative estimate: $0.10 - $0.50 per 1000 impressions for A-ADS)
+    const estimatedRPM = 0.25;
+    const estimatedRevenue = (totalImpressions / 1000) * estimatedRPM;
+    
+    // 24h comparison for alerts
+    const impressions24h = last24hEvents.filter(e => e.type === 'ad_impression').length;
+    const baseline = adsConfig.baseline || { impressions: 0 };
+    const dropPercentage = baseline.impressions > 0 
+      ? ((baseline.impressions - impressions24h) / baseline.impressions * 100).toFixed(1)
+      : 0;
+    
+    res.json({
+      summary: {
+        totalImpressions,
+        totalClicks,
+        ctr: `${ctr}%`,
+        estimatedRevenue: `$${estimatedRevenue.toFixed(2)}`,
+        uniqueSessions: new Set(recentEvents.map(e => e.sessionId)).size,
+      },
+      dailyStats,
+      placements,
+      variants,
+      alerts: {
+        significantDrop: dropPercentage > 80,
+        dropPercentage,
+      },
+      config: adsConfig,
+      lastUpdated: now,
+    });
+  } catch (error) {
+    console.error('[Ads Stats] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// AD CONFIG ENDPOINTS
+app.get('/api/ads/config', (req, res) => {
+  res.json(adsConfig);
+});
+
+app.post('/api/ads/config', (req, res) => {
+  try {
+    const { enabled, verificationMode, refreshEnabled, debugMode, updateBaseline } = req.body;
+    
+    if (typeof enabled === 'boolean') adsConfig.enabled = enabled;
+    if (typeof verificationMode === 'boolean') adsConfig.verificationMode = verificationMode;
+    if (typeof refreshEnabled === 'boolean') adsConfig.refreshEnabled = refreshEnabled;
+    if (typeof debugMode === 'boolean') adsConfig.debugMode = debugMode;
+    
+    // Update baseline if requested
+    if (updateBaseline) {
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      const last24hEvents = adEvents.filter(e => e.timestamp > oneDayAgo);
+      adsConfig.baseline = {
+        impressions: last24hEvents.filter(e => e.type === 'ad_impression').length,
+        clicks: last24hEvents.filter(e => e.type === 'ad_click').length,
+        date: Date.now(),
+      };
+    }
+    
+    saveAdsConfig(adsConfig);
+    console.log('[Ads Config] Updated:', adsConfig);
+    
+    res.json({ success: true, config: adsConfig });
+  } catch (error) {
+    console.error('[Ads Config] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET RECENT EVENTS FOR ADMIN
+app.get('/api/ads/events', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    const recentEvents = adEvents.slice(-limit).reverse();
+    res.json({ events: recentEvents, total: adEvents.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// FORCE SAVE EVENTS
+app.post('/api/ads/save', (req, res) => {
+  try {
+    saveAdEvents(adEvents);
+    res.json({ success: true, saved: adEvents.length });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save events' });
+  }
+});
+
+// Save events on server shutdown
+process.on('SIGINT', () => {
+  console.log('[Ads Analytics] Saving events before shutdown...');
+  saveAdEvents(adEvents);
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('[Ads Analytics] Saving events before shutdown...');
+  saveAdEvents(adEvents);
+  process.exit(0);
+});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

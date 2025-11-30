@@ -7,3 +7,4 @@ export { default as AAdsInArticle } from './AAdsInArticle';
 export { default as AAdsSidebar } from './AAdsSidebar';
 export { default as AAdsFeed } from './AAdsFeed';
 export { default as AAdsBottom } from './AAdsBottom';
+export { default as AdFallback } from './AdFallback';

@@ -6,6 +6,7 @@ import LogoIcon from './icons/LogoIcon';
 import TwitterIcon from './icons/TwitterIcon';
 import LinkedInIcon from './icons/LinkedInIcon';
 import SparklesIcon from './icons/SparklesIcon';
+import { AdPreferencesLink } from './ConsentBanner';
 
 const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -119,6 +120,9 @@ const Footer: React.FC = () => {
               {renderLink('/terms', 'Terms & Conditions')}
               {renderLink('/privacy', 'Privacy Policy')}
               {renderLink('/disclaimer', 'Disclaimer')}
+              <li>
+                <AdPreferencesLink />
+              </li>
             </ul>
           </div>
         </div>

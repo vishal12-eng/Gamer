@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { trackClose, trackImpression } from '../../lib/ads/analytics';
+import { getVariant } from '../../lib/ads/abtest';
+import { canShowAds } from '../ConsentBanner';
 
 const STORAGE_KEY = 'aads_sticky_banner_closed';
 const CLOSE_DURATION_MS = 24 * 60 * 60 * 1000;
@@ -8,7 +11,9 @@ const StickyAAdsBanner: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isClosed, setIsClosed] = useState(true);
+  const [hasTrackedImpression, setHasTrackedImpression] = useState(false);
   const adUnitId = import.meta.env.VITE_AADS_AD_UNIT_ID || '';
+  const stickyVariant = getVariant('stickyTest');
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -18,6 +23,13 @@ const StickyAAdsBanner: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (stickyVariant === 'none') {
+      setIsClosed(true);
+      return;
+    }
+
+    const delay = stickyVariant === 'delayed' ? 5000 : 1500;
+
     try {
       const closedAt = localStorage.getItem(STORAGE_KEY);
       if (closedAt) {
@@ -30,23 +42,32 @@ const StickyAAdsBanner: React.FC = () => {
       const timer = setTimeout(() => {
         setIsClosed(false);
         setIsVisible(true);
-      }, 1500);
+      }, delay);
       return () => clearTimeout(timer);
     } catch (e) {
       const timer = setTimeout(() => {
         setIsClosed(false);
         setIsVisible(true);
-      }, 1500);
+      }, delay);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [stickyVariant]);
 
   const handleClose = () => {
     setIsClosed(true);
+    trackClose('sticky-banner');
     try {
       localStorage.setItem(STORAGE_KEY, Date.now().toString());
     } catch (e) {
       console.error('Failed to save banner close state');
+    }
+  };
+
+  const handleLoad = () => {
+    setIsLoaded(true);
+    if (!hasTrackedImpression) {
+      trackImpression('sticky-banner', isMobile ? '320x50' : '728x90', stickyVariant);
+      setHasTrackedImpression(true);
     }
   };
 
@@ -58,7 +79,7 @@ const StickyAAdsBanner: React.FC = () => {
     ? { width: 320, height: 50 } 
     : { width: 728, height: 90 };
 
-  if (!adUnitId || isClosed) {
+  if (!adUnitId || isClosed || !canShowAds()) {
     return null;
   }
 
@@ -121,7 +142,7 @@ const StickyAAdsBanner: React.FC = () => {
               backgroundColor: 'transparent'
             }}
             loading="lazy"
-            onLoad={() => setIsLoaded(true)}
+            onLoad={handleLoad}
             title="Sticky Banner Advertisement"
             sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
           />
