@@ -54,13 +54,19 @@ const Chatbot: React.FC = () => {
 
     try {
         const stream = await chatWithBotStream(history, currentInput);
+        let accumulatedText = '';
         
         for await (const chunk of stream) {
+            accumulatedText += chunk.text;
+            const currentText = accumulatedText;
             setMessages((prev) => {
                 const newMessages = [...prev];
-                const lastMessage = newMessages[newMessages.length - 1];
-                if (lastMessage?.sender === 'bot') {
-                    lastMessage.text += chunk.text;
+                const lastIndex = newMessages.length - 1;
+                if (newMessages[lastIndex]?.sender === 'bot') {
+                    newMessages[lastIndex] = {
+                        ...newMessages[lastIndex],
+                        text: currentText
+                    };
                 }
                 return newMessages;
             });
