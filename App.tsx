@@ -11,9 +11,9 @@ import { ArticleProvider } from './hooks/useArticles';
 import { HomePageSkeleton } from './components/SkeletonLoader';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { HilltopAdsProvider } from './components/ads';
+import { AAdsProvider } from './components/ads';
+import { AAdsBottom } from './components/ads';
 
-// Lazy-loaded page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ArticlePage = lazy(() => import('./pages/ArticlePage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
@@ -47,7 +47,7 @@ function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <HilltopAdsProvider>
+        <AAdsProvider>
           <ToastContext.Provider value={{ showToast }}>
             <ArticleProvider>
               <HashRouter>
@@ -56,7 +56,6 @@ function App() {
                 <main className="flex-grow container mx-auto px-4 py-8 pt-24">
                   <Suspense fallback={<HomePageSkeleton />}>
                     <Routes>
-                      {/* Public Routes */}
                       <Route path="/" element={<HomePage />} />
                       <Route path="/foryou" element={<ForYouPage />} />
                       <Route path="/article/:slug" element={<ArticlePage />} />
@@ -70,11 +69,7 @@ function App() {
                       <Route path="/privacy" element={<PrivacyPolicyPage />} />
                       <Route path="/terms" element={<TermsAndConditionsPage />} />
                       <Route path="/sitemap" element={<SitemapPage />} />
-
-                      {/* Admin Auth Routes - PUBLIC & NOT WRAPPED IN ProtectedRoute */}
                       <Route path="/admin/login" element={<AdminLogin />} />
-
-                      {/* Protected Admin Routes */}
                       <Route 
                         path="/admin/dashboard" 
                         element={
@@ -107,12 +102,11 @@ function App() {
                           </ProtectedRoute>
                         } 
                       />
-                      
-                      {/* Fallback - Ensure this doesn't capture /admin/login */}
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </Suspense>
                 </main>
+                <AAdsBottom />
                 <Chatbot />
                 <Footer />
                 <Toast message={toastMessage} onClose={closeToast} />
@@ -120,7 +114,7 @@ function App() {
               </HashRouter>
             </ArticleProvider>
           </ToastContext.Provider>
-        </HilltopAdsProvider>
+        </AAdsProvider>
       </AuthProvider>
     </HelmetProvider>
   );

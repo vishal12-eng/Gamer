@@ -1,7 +1,7 @@
-export { default as HilltopAd } from './HilltopAd';
-export type { HilltopAdProps, BannerItem } from './HilltopAd';
-
-export { default as StickyAd } from './StickyAd';
-export { default as ArticleInlineAd } from './ArticleInlineAd';
-export { default as FeedAd } from './FeedAd';
-export { default as HilltopAdsProvider, useHilltopAds } from './HilltopAdsProvider';
+export { default as AAdsProvider, useAAds } from './AAdsProvider';
+export { default as AAdsBanner } from './AAdsBanner';
+export type { AAdsBannerProps } from './AAdsBanner';
+export { default as AAdsInArticle } from './AAdsInArticle';
+export { default as AAdsSidebar } from './AAdsSidebar';
+export { default as AAdsFeed } from './AAdsFeed';
+export { default as AAdsBottom } from './AAdsBottom';

@@ -11,7 +11,7 @@ import { HomePageSkeleton } from '../components/SkeletonLoader';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import SEO from '../components/SEO';
 import { generateOrganizationSchema, generateWebsiteSchema } from '../utils/seoHelpers';
-import { FeedAd } from '../components/ads';
+import { AAdsFeed, AAdsBanner } from '../components/ads';
 
 const ARTICLES_PER_PAGE = 6;
 
@@ -58,7 +58,6 @@ const HomePage: React.FC = () => {
         schema={[websiteSchema, orgSchema]}
       />
       
-      {/* Hero Section */}
       <section className="relative -mt-24 h-[60vh] md:h-[80vh] flex items-center justify-center text-center text-white overflow-hidden">
         <div className="absolute inset-0">
           <img 
@@ -87,9 +86,12 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      <div className="flex justify-center">
+        <AAdsBanner size="728x90" className="my-4" />
+      </div>
+
       <TrendingTicker articles={articles} />
 
-      {/* Main Content */}
       <section id="latest-articles">
         <div className="flex items-center mb-8">
             <SparklesIcon className="w-8 h-8 text-cyan-400 mr-3" />
@@ -100,7 +102,7 @@ const HomePage: React.FC = () => {
             <React.Fragment key={article.slug}>
               <ArticleCard article={article} />
               {(index + 1) % 4 === 0 && index < currentArticles.length - 1 && (
-                <FeedAd />
+                <AAdsFeed />
               )}
             </React.Fragment>
           ))}

@@ -1,8 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_HILLTOPADS_ZONE_ID: string;
-  readonly VITE_HILLTOPADS_NATIVE_ENABLED: string;
+  readonly VITE_AADS_AD_UNIT_ID: string;
 }
 
 interface ImportMeta {

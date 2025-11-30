@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArticleInlineAd } from '../components/ads';
+import { AAdsInArticle } from '../components/ads';
 
 export function injectAdsIntoContent(
   htmlContent: string,
@@ -21,7 +21,7 @@ export function injectAdsIntoContent(
     );
     
     if (index + 1 === afterParagraph) {
-      elements.push(<ArticleInlineAd key={`ad-${index}`} />);
+      elements.push(<AAdsInArticle key={`ad-${index}`} />);
     }
   });
   

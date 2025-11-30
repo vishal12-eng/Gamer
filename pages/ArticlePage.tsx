@@ -5,14 +5,11 @@ import { Article, Category } from '../types';
 import ReadingProgressBar from '../components/ReadingProgressBar';
 import ArticleCard from '../components/ArticleCard';
 import { summarizeText, translateText, generateTextToSpeech, suggestTags, analyzeReadability, expandContentStream } from '../services/geminiService';
-import { rewriteArticleForSEO } from '../services/aiRewrite';
 import { fetchPixabayImage } from '../services/pixabayService';
 import { 
   generateSEOTitle, 
   generateMetaDescription, 
   generateKeywords, 
-  buildOpenGraph, 
-  buildTwitterCard, 
   buildArticleSchema, 
   buildBreadcrumbSchema 
 } from '../utils/seoEngine';
@@ -22,7 +19,6 @@ import SpeakerIcon from '../components/icons/SpeakerIcon';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import SunIcon from '../components/icons/SunIcon';
 import MoonIcon from '../components/icons/MoonIcon';
-import ImageCaptionIcon from '../components/icons/ImageCaptionIcon';
 import TagIcon from '../components/icons/TagIcon';
 import ReadabilityIcon from '../components/icons/ReadabilityIcon';
 import ClipboardIcon from '../components/icons/ClipboardIcon';
@@ -41,7 +37,7 @@ import { slugify } from '../utils/slugify';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import Feedback from '../components/Feedback';
 import SEO from '../components/SEO';
-import { ArticleInlineAd, StickyAd } from '../components/ads';
+import { AAdsInArticle, AAdsSidebar } from '../components/ads';
 import { splitContentWithAd } from '../utils/articleAdInjector';
 
 // Helper for TTS
@@ -623,7 +619,7 @@ const ArticlePage: React.FC = () => {
                     dangerouslySetInnerHTML={{ __html: before }}
                   />
                   
-                  {after && <ArticleInlineAd />}
+                  {after && <AAdsInArticle />}
                   
                   {after && (
                     <div
@@ -637,7 +633,7 @@ const ArticlePage: React.FC = () => {
           </div>
           
           <aside className="hidden lg:block w-80 flex-shrink-0">
-            <StickyAd topOffset={100} />
+            <AAdsSidebar topOffset={100} />
           </aside>
         </div>
 
