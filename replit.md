@@ -66,6 +66,7 @@ Generates production builds with:
 - **SEO Optimized**: Sitemap, robots.txt, meta tags
 - **Pixabay Integration**: Real images for articles (both cards and detail pages)
 - **Mailchimp Integration**: Newsletter subscription with email validation
+- **Cuelinks SmartLink Ads**: Affiliate banner ads with auto-rotation and responsive design
 
 ## Important Configuration Notes
 
@@ -114,6 +115,31 @@ When ready, use Replit's publish feature to create a live URL.
   - Subscribed emails added to Mailchimp list
   - Newsletter form in footer with success/error messages
   - API key managed via Replit Secrets
+
+### Cuelinks SmartLink Ad Integration
+- **Location**: `components/ads/` directory
+- **Components**:
+  - `SmartAd` - Reusable rotating banner component with animations
+  - `ArticleInlineAd` - In-article ad placement (after 2nd paragraph)
+  - `StickyAd` - Sticky sidebar ad for desktop
+  - `FeedAd` - Feed-style ad on homepage (after every 4 articles)
+  - `CuelinksProvider` - Global script loader
+- **Features**:
+  - Auto-rotating banners (4-6 second intervals)
+  - Smooth fade/slide animations
+  - Rounded corners with drop shadows
+  - Hover zoom effects
+  - Dark mode adaptation (shadows/glow match theme)
+  - Mobile carousel with swipe support
+  - Lazy-loaded images for performance
+  - Fail-safe: Falls back to placeholder banners if script fails
+- **Configuration**:
+  - Set `VITE_CUELINKS_SMARTLINK_ID` environment variable with your Cuelinks ID
+  - Custom banners can be passed via `bannerList` prop
+- **Placements**:
+  - **Placement A**: Inside article (after 2nd paragraph)
+  - **Placement B**: Desktop sidebar (sticky)
+  - **Placement C**: Homepage feed (after every 4 articles)
 
 ## Troubleshooting
 
