@@ -4,7 +4,8 @@ import { useParams, Link } from 'react-router-dom';
 import { Article, Category } from '../types';
 import ReadingProgressBar from '../components/ReadingProgressBar';
 import ArticleCard from '../components/ArticleCard';
-import { summarizeText, translateText, generateTextToSpeech, suggestTags, analyzeReadability, expandContentStream } from '../services/geminiService';
+import { summarizeText, translateText, generateTextToSpeech, suggestTags, analyzeReadability } from '../services/geminiService';
+import { expandArticleWithSEO, getExpandedArticleFromDB, saveExpandedArticleToDB } from '../services/articleExpansionService';
 import { fetchPixabayImage } from '../services/pixabayService';
 import { 
   generateSEOTitle, 
@@ -263,19 +264,22 @@ const ArticlePage: React.FC = () => {
       setExpandedContent(null);
       setIsExpanding(false);
 
-      // --- Load Cached Expanded Content ---
-      const cachedExpanded = localStorage.getItem(`expanded_article_${foundArticle.slug}`);
-      if (cachedExpanded) {
-        setExpandedContent(cachedExpanded);
-      } else {
-        // --- Auto-Trigger Expansion if content is short/incomplete ---
-        // Simple heuristic: if content is less than ~400 words or seems like a short excerpt
-        // Since we use a serverless proxy, we don't need to check process.env.API_KEY on the client
-        const wordCount = foundArticle.content.split(/\s+/).length;
-        if (wordCount < 400) {
+      // --- Load Expanded Content from DB or Auto-Expand ---
+      const loadExpandedContent = async () => {
+        try {
+          const dbContent = await getExpandedArticleFromDB(foundArticle.slug);
+          if (dbContent) {
+            console.log(`[ArticlePage] Loaded expanded content from DB for: ${foundArticle.slug}`);
+            setExpandedContent(dbContent);
+          } else {
+            triggerAutoExpansion(foundArticle);
+          }
+        } catch (error) {
+          console.error('[ArticlePage] Failed to load from DB, triggering expansion:', error);
           triggerAutoExpansion(foundArticle);
         }
-      }
+      };
+      loadExpandedContent();
 
       // --- Reading History ---
       const HISTORY_KEY = 'ftj_view_history';
@@ -346,22 +350,35 @@ const ArticlePage: React.FC = () => {
 
   const triggerAutoExpansion = async (articleToExpand: Article) => {
     setIsExpanding(true);
+    console.log(`[ArticlePage] Starting AI expansion for: ${articleToExpand.title}`);
+    
     try {
-      const stream = await expandContentStream(articleToExpand.title, articleToExpand.content, articleToExpand.category);
-      let streamedText = "";
+      const result = await expandArticleWithSEO(
+        articleToExpand.title,
+        articleToExpand.content,
+        articleToExpand.category
+      );
       
-      for await (const chunk of stream) {
-        streamedText += chunk.text;
-        setExpandedContent(streamedText); // Updates the UI live ("typing effect")
+      if (result.success && result.expandedContent) {
+        console.log(`[ArticlePage] AI expansion complete: ${result.wordCount} words, readability: ${result.readabilityScore}`);
+        setExpandedContent(result.expandedContent);
+        
+        await saveExpandedArticleToDB(
+          articleToExpand.slug,
+          articleToExpand.title,
+          articleToExpand.content,
+          result.expandedContent,
+          articleToExpand.category,
+          result.wordCount,
+          result.readabilityScore
+        );
+        console.log(`[ArticlePage] Saved expanded article to DB: ${articleToExpand.slug}`);
+      } else {
+        console.error('[ArticlePage] AI expansion failed:', result.error);
+        setExpandedContent(null);
       }
-      
-      // Save finalized content
-      localStorage.setItem(`expanded_article_${articleToExpand.slug}`, streamedText);
-      
     } catch (error) {
-      console.error("Failed to expand article:", error);
-      // Fail-safe: If expansion fails, we simply stop expanding. 
-      // The UI will fallback to original content if expandedContent is null/empty.
+      console.error("[ArticlePage] Failed to expand article:", error);
       setExpandedContent(null); 
     } finally {
       setIsExpanding(false);

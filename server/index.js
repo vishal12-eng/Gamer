@@ -615,9 +615,103 @@ app.post('/api/mailchimpSubscribe', async (req, res) => {
   }
 });
 
+// === EXPANDED ARTICLES STORAGE ===
+const EXPANDED_ARTICLES_FILE = path.join(__dirname, 'expanded_articles.json');
+
+function loadExpandedArticles() {
+  try {
+    if (fs.existsSync(EXPANDED_ARTICLES_FILE)) {
+      return JSON.parse(fs.readFileSync(EXPANDED_ARTICLES_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.error('[Expanded Articles] Failed to load:', e.message);
+  }
+  return {};
+}
+
+function saveExpandedArticles(articles) {
+  try {
+    fs.writeFileSync(EXPANDED_ARTICLES_FILE, JSON.stringify(articles, null, 2));
+  } catch (e) {
+    console.error('[Expanded Articles] Failed to save:', e.message);
+  }
+}
+
+let expandedArticlesCache = loadExpandedArticles();
+
+app.get('/api/expanded-article/:slug', (req, res) => {
+  try {
+    const { slug } = req.params;
+    const article = expandedArticlesCache[slug];
+    
+    if (!article) {
+      return res.status(404).json({ error: 'Expanded article not found' });
+    }
+    
+    console.log(`[Expanded Articles] Retrieved article: ${slug}`);
+    res.json(article);
+  } catch (error) {
+    console.error('[Expanded Articles] Get error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/expanded-article', (req, res) => {
+  try {
+    const { slug, originalTitle, originalContent, expandedContent, category, wordCount, readabilityScore } = req.body;
+    
+    if (!slug || !expandedContent) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    expandedArticlesCache[slug] = {
+      slug,
+      originalTitle,
+      originalContent: originalContent?.substring(0, 1000),
+      expandedContent,
+      category,
+      wordCount,
+      readabilityScore,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    saveExpandedArticles(expandedArticlesCache);
+    
+    console.log(`[Expanded Articles] Saved article: ${slug} (${wordCount} words)`);
+    res.json({ success: true, slug });
+  } catch (error) {
+    console.error('[Expanded Articles] Save error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/expanded-articles/stats', (req, res) => {
+  try {
+    const slugs = Object.keys(expandedArticlesCache);
+    const totalArticles = slugs.length;
+    const avgWordCount = totalArticles > 0 
+      ? Math.round(slugs.reduce((sum, slug) => sum + (expandedArticlesCache[slug].wordCount || 0), 0) / totalArticles)
+      : 0;
+    
+    res.json({
+      totalArticles,
+      avgWordCount,
+      articles: slugs.slice(0, 20).map(slug => ({
+        slug,
+        wordCount: expandedArticlesCache[slug].wordCount,
+        createdAt: expandedArticlesCache[slug].createdAt
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`[Backend Server] Running on http://0.0.0.0:${PORT}`);
   console.log(`[Backend Server] API Key available: ${!!(process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY)}`);
   console.log(`[Backend Server] Pixabay Key available: ${!!process.env.PIXABAY_API_KEY}`);
   console.log(`[Backend Server] Mailchimp Key available: ${!!process.env.MAILCHIMP_API_KEY}`);
+  console.log(`[Backend Server] Expanded articles cached: ${Object.keys(expandedArticlesCache).length}`);
 });
