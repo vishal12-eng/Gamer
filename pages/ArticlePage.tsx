@@ -38,8 +38,6 @@ import { slugify } from '../utils/slugify';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import Feedback from '../components/Feedback';
 import SEO from '../components/SEO';
-import { AAdsInArticle, AAdsSidebar, AAdsTopBanner } from '../components/ads';
-import { splitContentWithAd } from '../utils/articleAdInjector';
 
 // Web Speech API is used for TTS - no external dependencies needed
 
@@ -682,9 +680,6 @@ const ArticlePage: React.FC = () => {
           </div>
         </header>
 
-        <div className="flex justify-center my-6">
-          <AAdsTopBanner className="mb-4" />
-        </div>
 
         <div className="my-6 border-y border-gray-200 dark:border-gray-700 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center flex-wrap gap-2">
@@ -818,34 +813,12 @@ const ArticlePage: React.FC = () => {
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1">
-            {(() => {
-              const content = translatedContent || improvedContent || expandedContent || article.content;
-              const { before, after } = splitContentWithAd(content, 2);
-              
-              return (
-                <>
-                  <div
-                    itemProp="articleBody"
-                    className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding || isImprovingReadability ? 'typing-cursor' : ''}`}
-                    dangerouslySetInnerHTML={{ __html: before }}
-                  />
-                  
-                  {after && <AAdsInArticle />}
-                  
-                  {after && (
-                    <div
-                      className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding || isImprovingReadability ? 'typing-cursor' : ''}`}
-                      dangerouslySetInnerHTML={{ __html: after }}
-                    />
-                  )}
-                </>
-              );
-            })()}
+            <div
+              itemProp="articleBody"
+              className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding || isImprovingReadability ? 'typing-cursor' : ''}`}
+              dangerouslySetInnerHTML={{ __html: translatedContent || improvedContent || expandedContent || article.content }}
+            />
           </div>
-          
-          <aside className="hidden lg:block w-[176px] flex-shrink-0">
-            <AAdsSidebar topOffset={100} />
-          </aside>
         </div>
 
         {suggestedTags.length > 0 && (
