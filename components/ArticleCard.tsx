@@ -22,7 +22,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
         const pixabayUrl = await fetchPixabayImage(
           article.title,
           article.category,
-          article.imageUrl
+          article.imageUrl,
+          article.summary
         );
         console.log(`[ArticleCard] Pixabay service returned: ${pixabayUrl}`);
         setImageUrl(pixabayUrl);

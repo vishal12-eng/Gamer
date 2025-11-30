@@ -13,7 +13,8 @@ interface PixabayResponse {
 export const fetchPixabayImage = async (
   articleTitle: string,
   category: string,
-  fallbackUrl: string
+  fallbackUrl: string,
+  articleSummary: string = ""
 ): Promise<string> => {
   console.log(`[Pixabay Service] Starting fetch for: "${articleTitle}" (${category})`);
   
@@ -33,6 +34,7 @@ export const fetchPixabayImage = async (
       body: JSON.stringify({
         searchQuery: articleTitle,
         category: category,
+        summary: articleSummary,
       }),
     });
 

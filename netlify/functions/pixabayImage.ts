@@ -20,21 +20,72 @@ interface ResponsePayload {
   error?: string;
 }
 
+// Category-to-search mapping for better results
+const categorySearchMap: Record<string, string[]> = {
+  'Entertainment': ['movie', 'celebrity', 'film', 'actor', 'actress'],
+  'Technology': ['computer', 'software', 'tech', 'innovation', 'digital'],
+  'Business': ['finance', 'business', 'corporate', 'office', 'economics'],
+  'Science': ['science', 'research', 'laboratory', 'experiment', 'scientist'],
+  'AI': ['artificial intelligence', 'robot', 'technology', 'future', 'tech'],
+  'Sports': ['sports', 'athlete', 'game', 'championship', 'competition'],
+  'Health': ['health', 'medical', 'fitness', 'wellness', 'doctor'],
+  'Global': ['world', 'globe', 'international', 'news', 'global'],
+  'India': ['india', 'delhi', 'mumbai', 'culture', 'indian'],
+  'US': ['usa', 'america', 'united states', 'american', 'washington'],
+  'Product': ['product', 'gadget', 'device', 'innovation', 'technology'],
+};
+
+// Helper function to generate AI-powered search queries using Gemini
+const generateOptimizedQueries = async (title: string, summary: string, category: string): Promise<string[]> => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return [];
+
+    const prompt = `Generate 4 highly specific Pixabay search queries for this article that will find the most relevant, high-quality images. Return ONLY the queries as a JSON array of strings, nothing else.
+
+Article Title: ${title}
+Article Summary: ${summary.substring(0, 300)}
+Category: ${category}
+
+Focus on: specific terms, objects, people, scenes, or concepts mentioned in the title/summary. Avoid generic terms. Include variations.
+
+Example output: ["quantum computing", "AI chip design", "processor technology", "innovation lab"]`;
+
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 150 },
+      }),
+    }).then(r => r.json());
+
+    const content = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonMatch = content.match(/\[[\s\S]*?\]/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]).filter((q: string) => q && q.trim());
+    }
+  } catch (error) {
+    console.error('[Pixabay] AI query generation error:', error);
+  }
+  return [];
+};
+
 // Helper function to extract keywords from title
 const extractKeywords = (title: string): string[] => {
   try {
     // Remove special characters and split by spaces
     const cleaned = title
-      .replace(/[^a-zA-Z0-9\s]/g, ' ') // Remove special chars
+      .replace(/[^a-zA-Z0-9\s]/g, ' ')
       .toLowerCase()
       .trim()
       .split(/\s+/)
-      .filter(word => word && word.length > 2 && word.length < 15); // Keep words 3-14 chars
+      .filter(word => word && word.length > 2 && word.length < 15);
     
     // Remove common words
     const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'been', 'was', 'are', 'but', 'will', 'can', 'all', 'has', 'had', 'not', 'you', 'your', 'she', 'her', 'his', 'him', 'its', 'our', 'out', 'get', 'got', 'make', 'made', 'say', 'said', 'new', 'day', 'time', 'year', 'people']);
     
-    const keywords = cleaned.filter(word => !stopWords.has(word)).slice(0, 2);
+    const keywords = cleaned.filter(word => !stopWords.has(word)).slice(0, 3);
     return keywords.length > 0 ? keywords : ['technology'];
   } catch (error) {
     console.error('[Pixabay] Keyword extraction error:', error);
@@ -77,7 +128,7 @@ const handler: Handler = async (event) => {
     }
 
     const body = JSON.parse(event.body || "{}");
-    const { searchQuery, category } = body;
+    const { searchQuery, category, summary } = body;
     console.log(`[Pixabay Handler] Original Query: "${searchQuery}", Category: "${category}"`);
 
     if (!searchQuery) {
@@ -92,31 +143,41 @@ const handler: Handler = async (event) => {
       };
     }
 
-    // Extract keywords from title to create cleaner search queries
-    let keywords: string[] = [];
-    try {
-      keywords = extractKeywords(searchQuery);
-    } catch (keywordError) {
-      console.error('[Pixabay Handler] Error extracting keywords:', keywordError);
-      keywords = ['technology'];
-    }
-    
-    console.log(`[Pixabay Handler] Extracted keywords: ${keywords.join(", ")}`);
+    // Build optimized search queries in priority order
+    const queries: string[] = [];
 
-    // Build search queries: use extracted keywords, then category, then generic fallback
-    const queries = [
-      ...keywords, // Use individual keywords
-      keywords.join(" "), // Try all keywords together
-      category && category !== "All" ? category : "technology",
-      "photo" // Final fallback
-    ].filter((q, idx, arr) => q && q.trim() && arr.indexOf(q) === idx); // Remove duplicates and empty
-    
-    console.log(`[Pixabay Handler] Final search queries: ${queries.join(", ")}`);
+    // 1. AI-generated queries from title + summary (most specific)
+    if (summary) {
+      const aiQueries = await generateOptimizedQueries(searchQuery, summary, category || "General");
+      queries.push(...aiQueries);
+    }
+
+    // 2. Category-specific search terms
+    if (category && categorySearchMap[category]) {
+      queries.push(...categorySearchMap[category]);
+    }
+
+    // 3. Extracted keywords from title
+    const keywords = extractKeywords(searchQuery);
+    queries.push(...keywords);
+    queries.push(keywords.join(" "));
+
+    // 4. Category fallback
+    if (category && category !== "All") {
+      queries.push(category);
+    }
+
+    // 5. Generic fallbacks
+    queries.push("photo", "image");
+
+    // Remove duplicates and empty strings
+    const uniqueQueries = Array.from(new Set(queries.filter(q => q && q.trim())));
+    console.log(`[Pixabay Handler] Final search queries (${uniqueQueries.length}): ${uniqueQueries.slice(0, 5).join(", ")}...`);
 
     let imageUrl: string | null = null;
 
-    // Try searches in order of specificity
-    for (const query of queries) {
+    // Try searches in order of specificity with better filters
+    for (const query of uniqueQueries) {
       if (imageUrl) break;
 
       try {
@@ -125,9 +186,11 @@ const handler: Handler = async (event) => {
         pixabayUrl.searchParams.append("q", query);
         pixabayUrl.searchParams.append("image_type", "photo");
         pixabayUrl.searchParams.append("order", "popular");
-        pixabayUrl.searchParams.append("per_page", "1");
+        pixabayUrl.searchParams.append("per_page", "3"); // Get 3 to choose best
         pixabayUrl.searchParams.append("safesearch", "true");
         pixabayUrl.searchParams.append("editors_choice", "true");
+        pixabayUrl.searchParams.append("min_width", "1000"); // Minimum 1000px width
+        pixabayUrl.searchParams.append("min_height", "600");  // Minimum 600px height
 
         console.log(`[Pixabay Handler] Fetching from Pixabay with query: "${query}"`);
         const response = await fetch(pixabayUrl.toString());
@@ -144,7 +207,7 @@ const handler: Handler = async (event) => {
         console.log(`[Pixabay Handler] Pixabay response hits: ${data.hits?.length || 0}`);
 
         if (data.hits && data.hits.length > 0) {
-          // Use largeImageURL for better quality, fallback to webformatURL
+          // Use largeImageURL for better quality
           imageUrl = data.hits[0].largeImageURL || data.hits[0].webformatURL;
           console.log(
             `[Pixabay Handler] Success! Found image for query: "${query}"`
@@ -158,7 +221,6 @@ const handler: Handler = async (event) => {
           `[Pixabay Handler] Error fetching from Pixabay for query "${query}":`,
           fetchError instanceof Error ? fetchError.message : fetchError
         );
-        // Continue to next query
       }
     }
 
