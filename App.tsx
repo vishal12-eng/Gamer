@@ -11,7 +11,7 @@ import { ArticleProvider } from './hooks/useArticles';
 import { HomePageSkeleton } from './components/SkeletonLoader';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AdsterraProvider } from './components/ads';
+import { HilltopAdsProvider } from './components/ads';
 
 // Lazy-loaded page components for code splitting
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -47,7 +47,7 @@ function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <AdsterraProvider>
+        <HilltopAdsProvider>
           <ToastContext.Provider value={{ showToast }}>
             <ArticleProvider>
               <HashRouter>
@@ -120,7 +120,7 @@ function App() {
               </HashRouter>
             </ArticleProvider>
           </ToastContext.Provider>
-        </AdsterraProvider>
+        </HilltopAdsProvider>
       </AuthProvider>
     </HelmetProvider>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import SmartAd, { BannerItem } from './SmartAd';
+import HilltopAd, { BannerItem } from './HilltopAd';
 
 interface StickyAdProps {
   bannerList?: BannerItem[];
@@ -56,7 +56,7 @@ const StickyAd: React.FC<StickyAdProps> = ({
       style={{ top: isNearFooter ? 'auto' : topOffset }}
     >
       <div className="relative">
-        <SmartAd
+        <HilltopAd
           variant="vertical"
           width={300}
           height={600}

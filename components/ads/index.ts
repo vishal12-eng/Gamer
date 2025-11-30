@@ -1,7 +1,7 @@
-export { default as SmartAd } from './SmartAd';
-export type { SmartAdProps, BannerItem } from './SmartAd';
+export { default as HilltopAd } from './HilltopAd';
+export type { HilltopAdProps, BannerItem } from './HilltopAd';
 
 export { default as StickyAd } from './StickyAd';
 export { default as ArticleInlineAd } from './ArticleInlineAd';
 export { default as FeedAd } from './FeedAd';
-export { default as AdsterraProvider, useAdsterra } from './AdsterraProvider';
+export { default as HilltopAdsProvider, useHilltopAds } from './HilltopAdsProvider';

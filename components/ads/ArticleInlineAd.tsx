@@ -1,6 +1,6 @@
 import React from 'react';
-import SmartAd, { BannerItem } from './SmartAd';
-import { useAdsterra } from './AdsterraProvider';
+import HilltopAd, { BannerItem } from './HilltopAd';
+import { useHilltopAds } from './HilltopAdsProvider';
 
 interface ArticleInlineAdProps {
   bannerList?: BannerItem[];
@@ -11,7 +11,7 @@ const ArticleInlineAd: React.FC<ArticleInlineAdProps> = ({
   bannerList,
   className = ''
 }) => {
-  const { hasError } = useAdsterra();
+  const { hasError } = useHilltopAds();
   const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
 
   return (
@@ -30,7 +30,7 @@ const ArticleInlineAd: React.FC<ArticleInlineAdProps> = ({
             {hasError ? 'Featured Products' : 'Sponsored Content'}
           </span>
         </div>
-        <SmartAd
+        <HilltopAd
           variant="horizontal"
           width="100%"
           height={250}

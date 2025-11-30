@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useAdsterra } from './AdsterraProvider';
+import { useHilltopAds } from './HilltopAdsProvider';
 
 export interface BannerItem {
   id: string;
@@ -9,7 +9,7 @@ export interface BannerItem {
   title?: string;
 }
 
-export interface SmartAdProps {
+export interface HilltopAdProps {
   width?: string | number;
   height?: string | number;
   variant?: 'square' | 'horizontal' | 'vertical';
@@ -44,48 +44,13 @@ const defaultBanners: BannerItem[] = [
   },
   {
     id: 'banner-4',
-    imageUrl: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=80',
-    altText: 'Skincare Products',
-    link: 'https://www.amazon.com/dp/B08CXYZ1WN',
-    title: 'Beauty & Skincare'
-  },
-  {
-    id: 'banner-5',
-    imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80',
-    altText: 'Running Shoes',
-    link: 'https://www.amazon.com/dp/B0B9Q3F6PR',
-    title: 'Sports & Fitness'
-  },
-  {
-    id: 'banner-6',
     imageUrl: 'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=800&q=80',
     altText: 'Laptop',
     link: 'https://www.amazon.com/dp/B0BS4BP8FB',
     title: 'Tech Gadgets'
   },
   {
-    id: 'banner-7',
-    imageUrl: 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800&q=80',
-    altText: 'Perfume',
-    link: 'https://www.amazon.com/dp/B07N2VQXN4',
-    title: 'Fragrances'
-  },
-  {
-    id: 'banner-8',
-    imageUrl: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&q=80',
-    altText: 'Smart Watch Display',
-    link: 'https://www.amazon.com/dp/B0BHB8XC86',
-    title: 'Wearable Tech'
-  },
-  {
-    id: 'banner-9',
-    imageUrl: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&q=80',
-    altText: 'Laptop Setup',
-    link: 'https://www.amazon.com/dp/B0BN4H76TZ',
-    title: 'Work From Home'
-  },
-  {
-    id: 'banner-10',
+    id: 'banner-5',
     imageUrl: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80',
     altText: 'Gaming Headset',
     link: 'https://www.amazon.com/dp/B0BY7P31V2',
@@ -99,7 +64,7 @@ const variantDimensions = {
   vertical: { width: 160, height: 600 }
 };
 
-const SmartAd: React.FC<SmartAdProps> = ({
+const HilltopAd: React.FC<HilltopAdProps> = ({
   width,
   height,
   variant = 'horizontal',
@@ -119,16 +84,9 @@ const SmartAd: React.FC<SmartAdProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  const { smartLinkId, isLoaded } = useAdsterra();
+  useHilltopAds();
 
   const banners = bannerList || defaultBanners;
-  
-  const getSmartLinkUrl = useCallback((originalUrl: string): string => {
-    if (!smartLinkId || !originalUrl || originalUrl === '#') {
-      return originalUrl;
-    }
-    return `https://www.profitablecpmrate.com/${smartLinkId}?url=${encodeURIComponent(originalUrl)}`;
-  }, [smartLinkId]);
   
   const dimensions = useMemo(() => {
     if (width && height) {
@@ -230,7 +188,7 @@ const SmartAd: React.FC<SmartAdProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`smart-ad-container relative overflow-hidden select-none group ${className}`}
+      className={`hilltop-ad-container relative overflow-hidden select-none group ${className}`}
       style={{
         width: isMobile ? '100%' : dimensions.width,
         height: isMobile ? 'auto' : dimensions.height,
@@ -269,7 +227,7 @@ const SmartAd: React.FC<SmartAdProps> = ({
           {banners.map((banner, index) => (
             <a
               key={banner.id}
-              href={isLoaded ? getSmartLinkUrl(banner.link) : banner.link}
+              href={banner.link}
               target="_blank"
               rel="noopener noreferrer sponsored"
               data-original-href={banner.link}
@@ -375,4 +333,4 @@ const SmartAd: React.FC<SmartAdProps> = ({
   );
 };
 
-export default SmartAd;
+export default HilltopAd;

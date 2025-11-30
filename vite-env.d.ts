@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_ADSTERRA_SMARTLINK_ID: string;
+  readonly VITE_HILLTOPADS_ZONE_ID: string;
 }
 
 interface ImportMeta {

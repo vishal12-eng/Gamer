@@ -66,7 +66,7 @@ Generates production builds with:
 - **SEO Optimized**: Sitemap, robots.txt, meta tags
 - **Pixabay Integration**: Real images for articles (both cards and detail pages)
 - **Mailchimp Integration**: Newsletter subscription with email validation
-- **Adsterra SmartLink Ads**: Affiliate banner ads with auto-rotation and responsive design
+- **HilltopAds Banner Ads**: Clean affiliate banner ads with auto-rotation and responsive design
 
 ## Important Configuration Notes
 
@@ -116,18 +116,18 @@ When ready, use Replit's publish feature to create a live URL.
   - Newsletter form in footer with success/error messages
   - API key managed via Replit Secrets
 
-### Adsterra SmartLink Ad Integration
+### HilltopAds Banner Integration
 - **Location**: `components/ads/` directory
 - **Components**:
-  - `SmartAd` - Reusable rotating banner component with 10 auto-rotating banners
+  - `HilltopAd` - Reusable rotating banner component with 5 auto-rotating banners
   - `ArticleInlineAd` - In-article ad placement (after 2nd paragraph)
   - `StickyAd` - Sticky sidebar ad for desktop (doesn't overlap footer)
-  - `FeedAd` - Feed-style ad on homepage (after every 4 articles)
-  - `AdsterraProvider` - Global SmartLink script loader with `applySmartLinkToAllOutgoingLinks()`
+  - `FeedAd` - Feed-style ad on homepage (after every 5 articles)
+  - `HilltopAdsProvider` - Global ad context provider
 - **Features**:
-  - 10 auto-rotating banners (5-6 second intervals)
+  - 5 auto-rotating clean banners (4-6 second intervals)
   - Smooth fade/slide animations
-  - Rounded corners with drop shadows
+  - Rounded corners with subtle shadows
   - Hover zoom effects
   - Dark mode adaptation (shadows/glow match theme)
   - Mobile carousel with swipe support
@@ -136,14 +136,15 @@ When ready, use Replit's publish feature to create a live URL.
   - No layout shift (content-visibility optimization)
   - No render blocking scripts (async/defer loading)
   - Fail-safe: Falls back to placeholder banners if script fails
-  - SPA-compatible navigation (MutationObserver for dynamic content)
+  - No pop-ups or adult content
+  - 100% clean, safe ads for tech sites
 - **Configuration**:
-  - Set `VITE_ADSTERRA_SMARTLINK_ID` environment variable with your Adsterra SmartLink ID
+  - Set `VITE_HILLTOPADS_ZONE_ID` environment variable with your HilltopAds Zone ID
   - Custom banners can be passed via `bannerList` prop
 - **Placements**:
   - **Placement A**: Inside article (after 2nd paragraph) - centered and responsive
   - **Placement B**: Desktop sidebar (sticky, doesn't overlap footer)
-  - **Placement C**: Homepage feed (after every 4 articles)
+  - **Placement C**: Homepage feed (after every 5 articles)
 
 ## Troubleshooting
 
