@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import SparklesIcon from './icons/SparklesIcon';
 
 interface ToastProps {
@@ -9,27 +9,50 @@ interface ToastProps {
 const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [progress, setProgress] = useState(100);
+  const startTimeRef = useRef<number>(0);
+  const animationFrameRef = useRef<number>(0);
+  const duration = 2700;
+
+  const updateProgress = useCallback((timestamp: number) => {
+    if (!startTimeRef.current) {
+      startTimeRef.current = timestamp;
+    }
+    
+    const elapsed = timestamp - startTimeRef.current;
+    const newProgress = Math.max(0, 100 - (elapsed / duration) * 100);
+    
+    setProgress(newProgress);
+    
+    if (elapsed < duration) {
+      animationFrameRef.current = requestAnimationFrame(updateProgress);
+    } else {
+      setIsVisible(false);
+      setTimeout(onClose, 400);
+    }
+  }, [onClose, duration]);
 
   useEffect(() => {
     if (message) {
       setIsVisible(true);
       setProgress(100);
-      
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => Math.max(0, prev - 100 / 27));
-      }, 100);
-
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(onClose, 400);
-      }, 2700);
+      startTimeRef.current = 0;
+      animationFrameRef.current = requestAnimationFrame(updateProgress);
 
       return () => {
-        clearTimeout(timer);
-        clearInterval(progressInterval);
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
       };
     }
-  }, [message, onClose]);
+  }, [message, updateProgress]);
+
+  const handleClose = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    setIsVisible(false);
+    setTimeout(onClose, 400);
+  };
 
   if (!message) return null;
 
@@ -52,11 +75,9 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
           </div>
           <span className="text-white font-medium">{message}</span>
           <button 
-            onClick={() => {
-              setIsVisible(false);
-              setTimeout(onClose, 400);
-            }}
+            onClick={handleClose}
             className="ml-2 text-gray-400 hover:text-white transition-colors"
+            aria-label="Close notification"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -67,7 +88,7 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
         {/* Progress bar */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/10">
           <div 
-            className="h-full bg-gradient-to-r from-cyan-400 to-purple-400 transition-all duration-100 ease-linear"
+            className="h-full bg-gradient-to-r from-cyan-400 to-purple-400"
             style={{ width: `${progress}%` }}
           ></div>
         </div>

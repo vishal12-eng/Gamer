@@ -284,25 +284,38 @@ const Header: React.FC = () => {
       >
         <div className="glass border-t border-white/10 py-4">
           <ul className="flex flex-col items-center space-y-1 px-4">
-             {NAV_LINKS.map((link, index) => (
-               <li 
-                 key={link.name} 
-                 className="w-full"
-                 style={{ 
-                   animationDelay: `${index * 50}ms`,
-                   animation: isMenuOpen ? 'fadeInUp 0.5s ease forwards' : 'none'
-                 }}
-               >
-                 {renderNavLink(link, true)}
-               </li>
-             ))}
+             {NAV_LINKS.map((link, index) => {
+               const isCategory = link.path.startsWith('/category/');
+               const categoryStyle = isCategory ? getCategoryStyle(link.name as Category) : null;
+               const activeColor = categoryStyle ? categoryStyle.text : activeNavLinkClasses;
+               return (
+                 <li 
+                   key={link.name} 
+                   className="w-full"
+                   style={{ 
+                     animationDelay: `${index * 50}ms`,
+                     animation: isMenuOpen ? 'fadeInUp 0.5s ease forwards' : 'none'
+                   }}
+                 >
+                   <NavLink
+                     to={link.path}
+                     onClick={() => setIsMenuOpen(false)}
+                     className={({ isActive }) => 
+                       `${navLinkClasses} text-lg w-full block text-center ${isActive ? activeColor : 'text-gray-300'}`
+                     }
+                   >
+                     {link.name}
+                   </NavLink>
+                 </li>
+               );
+             })}
              {isAuthenticated && (
                <>
                  <li className="w-full border-t border-white/10 my-2 pt-2"></li>
-                 <li className="w-full"><Link to="/admin/dashboard" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-lg text-cyan-400 font-medium hover:bg-white/5 rounded-lg transition-colors">Admin Dashboard</Link></li>
-                 <li className="w-full"><Link to="/admin/articles" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-lg text-cyan-400 font-medium hover:bg-white/5 rounded-lg transition-colors">Content Manager</Link></li>
-                 <li className="w-full"><Link to="/ai-tools" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-lg text-cyan-400 font-medium hover:bg-white/5 rounded-lg transition-colors">AI Tools</Link></li>
-                 <li className="w-full"><button onClick={handleLogout} className="block w-full text-left px-4 py-3 text-lg text-red-400 font-medium hover:bg-red-500/10 rounded-lg transition-colors">Logout</button></li>
+                 <li className="w-full"><Link to="/admin/dashboard" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-lg text-cyan-400 font-medium hover:bg-white/5 rounded-lg transition-colors text-center">Admin Dashboard</Link></li>
+                 <li className="w-full"><Link to="/admin/articles" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-lg text-cyan-400 font-medium hover:bg-white/5 rounded-lg transition-colors text-center">Content Manager</Link></li>
+                 <li className="w-full"><Link to="/ai-tools" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-lg text-cyan-400 font-medium hover:bg-white/5 rounded-lg transition-colors text-center">AI Tools</Link></li>
+                 <li className="w-full"><button onClick={handleLogout} className="block w-full text-center px-4 py-3 text-lg text-red-400 font-medium hover:bg-red-500/10 rounded-lg transition-colors">Logout</button></li>
                </>
              )}
           </ul>
