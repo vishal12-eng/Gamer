@@ -203,7 +203,7 @@ const HomePage: React.FC = () => {
       <section id="latest-articles" ref={articlesRef}>
         <div 
           className={`flex items-center mb-10 transition-all duration-700 ease-out ${
-            articlesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            articlesVisible ? 'opacity-100 translate-y-0' : 'opacity-100 translate-y-0'
           }`}
         >
           <div className="relative">
@@ -219,7 +219,7 @@ const HomePage: React.FC = () => {
         {/* Articles Grid with staggered reveal */}
         <div 
           className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-700 ${
-            articlesVisible ? 'opacity-100' : 'opacity-0'
+            articlesVisible ? 'opacity-100' : 'opacity-100'
           }`}
         >
           {currentArticles.map((article, index) => (
