@@ -1,15 +1,14 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useArticles } from '../hooks/useArticles';
-import { Article, Category } from '../types';
+import { Article } from '../types';
 import { CATEGORIES } from '../constants';
 import { useToast } from '../hooks/useToast';
 import { rewriteArticle, generateImage } from '../services/geminiService';
 import { rewriteArticleForSEO } from '../services/aiRewrite';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import CloseIcon from '../components/icons/CloseIcon';
-import DownloadIcon from '../components/icons/DownloadIcon';
 
 // Simple helper to convert file to base64 for preview/saving
 const fileToBase64 = (file: File): Promise<string> => {
@@ -260,7 +259,7 @@ const AdminArticleEditorPage: React.FC = () => {
           {activeTab === 'preview' && (
             <div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-inner border border-gray-700 prose prose-lg dark:prose-invert max-w-none animate-fade-in">
               <h1>{formData.title}</h1>
-              <img src={formData.imageUrl} alt="" className="w-full rounded-lg my-4" />
+              <img src={formData.imageUrl} alt="" loading="lazy" className="w-full rounded-lg my-4" />
               <div dangerouslySetInnerHTML={{ __html: formData.content || '' }} />
             </div>
           )}
@@ -315,7 +314,7 @@ const AdminArticleEditorPage: React.FC = () => {
           <div className="bg-gray-900/50 p-4 rounded-xl border border-white/10">
             <h3 className="text-sm font-bold text-white mb-3 uppercase tracking-wider">Hero Image</h3>
             <div className="aspect-video bg-black rounded-lg overflow-hidden relative group mb-3">
-              <img src={formData.imageUrl} alt="Hero" className="w-full h-full object-cover" />
+              <img src={formData.imageUrl} alt="Hero" loading="lazy" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-xs font-bold text-white">Current Image</span>
               </div>

@@ -275,10 +275,32 @@
 *:focus-visible {
   outline: 2px solid #22D3EE;
   outline-offset: 2px;
+  transition: outline-offset 0.15s ease;
+}
+
+/* Enhanced focus for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #22D3EE;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15);
 }
 
 /* Selection styles */
 ::selection {
   background: rgba(34, 211, 238, 0.3);
   color: white;
+}
+
+/* Respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

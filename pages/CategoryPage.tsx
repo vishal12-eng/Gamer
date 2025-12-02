@@ -5,7 +5,7 @@ import Pagination from '../components/Pagination';
 import { useArticles } from '../hooks/useArticles';
 import { ArticleCardSkeleton } from '../components/SkeletonLoader';
 import SEO from '../components/SEO';
-import { buildBreadcrumbSchema, generateSEOTitle, generateMetaDescription } from '../utils/seoEngine';
+import { buildBreadcrumbSchema, generateSEOTitle } from '../utils/seoEngine';
 
 const ARTICLES_PER_PAGE = 6;
 

@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Article, Category } from '../types';
 import { getCategoryStyle } from '../utils/categoryStyles';
-import { slugify } from '../utils/slugify';
 
 interface SearchResultCardProps {
   article: Article;

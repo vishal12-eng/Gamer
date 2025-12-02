@@ -5,12 +5,13 @@ FutureTech Journal is an ultra-modern, AI-powered news and blog website built wi
 
 ## Tech Stack
 - **Frontend**: React 18 + TypeScript + Vite
-- **UI**: Tailwind CSS (via CDN for dev)
+- **UI**: Tailwind CSS 4.x with PostCSS build (production-optimized)
 - **Routing**: React Router v6
 - **AI Backend**: Google Gemini API (via Netlify Functions)
 - **Styling**: Tailwind CSS with custom animations
 - **Deployment**: Netlify (with serverless functions)
 - **Ads**: A-ADS (Anonymous Ads) - Clean, Google-safe advertising
+- **Database**: PostgreSQL with Drizzle ORM (optional, requires provisioning)
 
 ## Project Structure
 ```
@@ -235,9 +236,43 @@ npm run seo:generate
 ## Performance Optimizations
 - Code splitting with lazy loading (lazy pages)
 - Optimized images and assets
-- Tailwind CSS purging (in production)
+- Tailwind CSS 4.x with PostCSS build (migrated from CDN for production)
 - SEO-optimized caching headers
 - Lazy-loaded ad iframes
+- Image lazy loading with `loading="lazy"` attribute
+- Preload hints for critical fonts and resources
+- Vite chunking configuration for vendor libraries
+- React.lazy() for all page components
+
+## Recent Updates (December 2025)
+### Replit Environment Migration
+- Migrated from Netlify dev to Replit environment
+- Server renamed to CommonJS (.cjs) for ES module compatibility
+- `"type": "module"` added to package.json for frontend code
+- Vite configured to serve frontend on port 5000
+- Backend server runs on port 3001 with API proxying
+
+### Tailwind CSS Migration
+- Migrated from CDN to proper PostCSS build using Tailwind 4.x
+- Added `@tailwindcss/postcss` for production optimization
+- CSS now properly bundled and tree-shaken
+
+### Error Handling & Accessibility
+- Added ErrorBoundary component wrapping main content
+- Enhanced focus-visible states for accessibility
+- Added reduced motion media query support
+- Comprehensive loading skeletons for all pages
+
+### SEO Enhancements
+- Enhanced meta tags in index.html (theme-color, apple-mobile-web-app, color-scheme)
+- Proper viewport with maximum-scale for accessibility
+- Author and format-detection meta tags
+- Robots meta with max-image-preview and max-snippet
+
+### API Keys Required (User to Add)
+- `PIXABAY_API_KEY` - For article images
+- `MAILCHIMP_API_KEY` - For newsletter subscriptions
+- `GOOGLE_AI_API_KEY` - For AI features (chatbot, content generation)
 
 ## Security Notes
 - GEMINI_API_KEY is stored securely in Replit Secrets

@@ -188,7 +188,7 @@ const ImageGenerator: React.FC = () => {
       )}
       {!isLoading && image && (
           <div className="mt-6">
-              <img src={`data:image/jpeg;base64,${image}`} alt="Generated" className="rounded-lg w-full"/>
+              <img src={`data:image/jpeg;base64,${image}`} alt="Generated" loading="lazy" className="rounded-lg w-full"/>
               <div className="mt-4">
                   <button onClick={handleDownload} className="w-full flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
                       <DownloadIcon className="w-5 h-5"/> Download
@@ -201,7 +201,7 @@ const ImageGenerator: React.FC = () => {
               <h3 className="text-xl font-bold text-white mb-4">My Gallery</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                   {savedImages.map((img, index) => (
-                      <img key={index} src={`data:image/jpeg;base64,${img}`} alt={`Saved image ${index + 1}`} className="rounded-lg w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImage(img)}/>
+                      <img key={index} src={`data:image/jpeg;base64,${img}`} alt={`Saved image ${index + 1}`} loading="lazy" className="rounded-lg w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform" onClick={() => setModalImage(img)}/>
                   ))}
               </div>
           </div>
@@ -215,6 +215,7 @@ const ImageGenerator: React.FC = () => {
                 <img 
                     src={`data:image/jpeg;base64,${modalImage}`} 
                     alt="Enlarged view" 
+                    loading="lazy"
                     className="rounded-lg object-contain max-h-[90vh]"
                 />
                 <button 
@@ -276,7 +277,7 @@ const ImageAnimator: React.FC = () => {
                 <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Upload Source Image</label>
                     <input type="file" accept="image/*" onChange={handleFileChange} className="mb-4 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"/>
-                    {preview && <img src={preview} alt="Preview" className="rounded-lg w-full max-h-64 object-contain bg-black/50"/>}
+                    {preview && <img src={preview} alt="Preview" loading="lazy" className="rounded-lg w-full max-h-64 object-contain bg-black/50"/>}
                 </div>
                 <div>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -313,14 +314,15 @@ const ImageEditor: React.FC = () => {
     const [prompt, setPrompt] = useState('Add a retro, vintage film filter.');
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
-    const [result, setResult] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [_result, _setResult] = useState<string | null>(null);
+    const [_isLoading, _setIsLoading] = useState(false);
+    void _result; void _setResult; void _isLoading; void _setIsLoading;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
             setFile(selectedFile);
-            setResult(null);
+            _setResult(null);
             setPreview(URL.createObjectURL(selectedFile));
         }
     };
@@ -337,7 +339,7 @@ const ImageEditor: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 opacity-75">
                 <div>
                     <input type="file" accept="image/*" onChange={handleFileChange} className="mb-4 block w-full text-sm text-gray-400"/>
-                    {preview && <img src={preview} alt="Preview" className="rounded-lg w-full"/>}
+                    {preview && <img src={preview} alt="Preview" loading="lazy" className="rounded-lg w-full"/>}
                 </div>
                 <div>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -383,7 +385,7 @@ const ImageAnalyzer: React.FC = () => {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                     <input type="file" accept="image/*" onChange={handleFileChange} className="mb-4 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"/>
-                    {preview && <img src={preview} alt="Preview" className="rounded-lg w-full"/>}
+                    {preview && <img src={preview} alt="Preview" loading="lazy" className="rounded-lg w-full"/>}
                 </div>
                 <div>
                     <form onSubmit={handleSubmit} className="space-y-4">

@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { useArticles } from '../hooks/useArticles';
 import { getCategoryStyle } from '../utils/categoryStyles';
 import { Category } from '../types';
-import SparklesIcon from '../components/icons/SparklesIcon';
 import SearchIcon from '../components/icons/SearchIcon';
 
 const AdminArticleListPage: React.FC = () => {
@@ -58,7 +57,7 @@ const AdminArticleListPage: React.FC = () => {
                     <tr key={article.slug} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <img src={article.imageUrl} alt="" className="w-10 h-10 rounded object-cover mr-3 opacity-80" />
+                          <img src={article.imageUrl} alt="" loading="lazy" className="w-10 h-10 rounded object-cover mr-3 opacity-80" />
                           <span className="font-medium text-white truncate max-w-xs">{article.title}</span>
                         </div>
                       </td>
