@@ -72,6 +72,18 @@ Generates production builds with:
 - **Mailchimp Integration**: Newsletter subscription with email validation
 - **A-ADS Integration**: Clean, Google-safe banner ads with responsive design
 
+## UI/UX Enhancements (December 2025)
+- **Glassmorphism Design**: Modern glass-like effects with backdrop-blur throughout the UI
+- **Advanced Animations**: fadeIn, fadeInUp, scaleIn, shimmer, pulse-glow, float, and gradient-shift keyframes
+- **Scroll Reveal**: Staggered entrance animations for content sections using IntersectionObserver
+- **Enhanced Header**: Shrinks on scroll with animated gradient border and glassmorphism
+- **Hero Section**: Animated category badge, floating decorative elements, scroll indicator
+- **Article Cards**: Hover effects (lift, glow, scale) with preserved text colors
+- **Skeleton Loading**: Shimmer effect loading states for better perceived performance
+- **Image Blur-Up**: Smooth image loading with blur-to-sharp transition
+- **Toast Notifications**: Progress bar with requestAnimationFrame for smooth animation
+- **Micro-Interactions**: Polished buttons, badges, and interactive elements
+
 ## Important Configuration Notes
 
 ### Vite Configuration (`vite.config.ts`)
