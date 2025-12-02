@@ -6,9 +6,9 @@
   "private": true,
   "scripts": {
     "preinstall": "npm cache clean --force",
-    "dev": "node server/index.js & vite",
+    "dev": "node server/index.cjs & vite",
     "dev:frontend": "vite",
-    "dev:backend": "node server/index.js",
+    "dev:backend": "node server/index.cjs",
     "build": "vite build && npm run seo:generate",
     "preview": "vite preview",
     "seo:generate": "node scripts/generate-sitemap.js && node scripts/generate-robots.js",

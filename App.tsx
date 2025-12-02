@@ -12,6 +12,7 @@ import { HomePageSkeleton } from './components/SkeletonLoader';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConsentBanner from './components/ConsentBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ArticlePage = lazy(() => import('./pages/ArticlePage'));
@@ -53,8 +54,9 @@ function App() {
             <div className="flex flex-col min-h-screen font-sans bg-gray-100 dark:bg-transparent transition-colors duration-500">
               <Header />
               <main className="flex-grow container mx-auto px-4 py-8 pt-24">
-                <Suspense fallback={<HomePageSkeleton />}>
-                  <Routes>
+                <ErrorBoundary>
+                  <Suspense fallback={<HomePageSkeleton />}>
+                    <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/foryou" element={<ForYouPage />} />
                     <Route path="/article/:slug" element={<ArticlePage />} />
@@ -109,9 +111,10 @@ function App() {
                         </ProtectedRoute>
                       } 
                     />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </Suspense>
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </Suspense>
+                </ErrorBoundary>
               </main>
               <Chatbot />
               <Footer />
