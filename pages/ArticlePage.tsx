@@ -634,8 +634,9 @@ const ArticlePage: React.FC = () => {
   // SEO Generation using the new Engine
   const domain = "https://futuretechjournal50.netlify.app";
   const seoTitle = generateSEOTitle(article.title);
-  const metaDescription = generateMetaDescription(article.summary);
+  const metaDescription = generateMetaDescription(article.summary || article.content);
   const keywords = generateKeywords(article.title, article.category, article.tags);
+  const articleModifiedTime = article.lastModified || article.date;
   const schema = [
     buildArticleSchema(article, domain),
     buildBreadcrumbSchema([
@@ -650,10 +651,13 @@ const ArticlePage: React.FC = () => {
       <SEO 
         title={seoTitle}
         description={metaDescription}
-        image={article.imageUrl}
+        image={imageUrl || article.imageUrl}
+        url={`/article/${article.slug}`}
         type="article"
         author={article.author}
         publishedTime={article.date}
+        modifiedTime={articleModifiedTime}
+        section={article.category}
         keywords={keywords}
         schema={schema}
       />

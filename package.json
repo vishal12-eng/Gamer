@@ -11,7 +11,7 @@
     "dev:backend": "node server/index.cjs",
     "build": "vite build && npm run seo:generate",
     "preview": "vite preview",
-    "seo:generate": "node scripts/generate-sitemap.js && node scripts/generate-robots.js",
+    "seo:generate": "node scripts/generate-sitemap.cjs && node scripts/generate-robots.cjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },

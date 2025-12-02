@@ -139,7 +139,7 @@ Generate the expanded article now:`;
     }
 
     const textContent = content.replace(/<[^>]+>/g, ' ');
-    const wordCount = textContent.split(/\s+/).filter(w => w.length > 0).length;
+    const wordCount = textContent.split(/\s+/).filter((w: string) => w.length > 0).length;
 
     const hasH2 = /<h2[^>]*>/i.test(content);
     const hasList = /<(ul|ol)[^>]*>/i.test(content);
@@ -149,7 +149,7 @@ Generate the expanded article now:`;
       console.warn(`[ArticleExpansion] Content validation warning: words=${wordCount}, hasH2=${hasH2}, hasList=${hasList}`);
     }
 
-    const sentences = textContent.split(/[.!?]+/).filter(s => s.trim());
+    const sentences = textContent.split(/[.!?]+/).filter((s: string) => s.trim());
     const avgWordsPerSentence = sentences.length > 0 ? wordCount / sentences.length : 15;
     const readabilityScore = Math.max(6, Math.min(9, Math.round(12 - avgWordsPerSentence / 2)));
 

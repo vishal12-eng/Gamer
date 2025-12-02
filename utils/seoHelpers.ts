@@ -169,3 +169,39 @@ export const generateContactPageSchema = () => {
     }
   };
 };
+
+export const generateAuthorPageSchema = (authorName: string, articleCount: number) => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "name": `${authorName} - Author Profile`,
+    "description": `Articles and insights by ${authorName} on ${SEO_CONFIG.siteName}`,
+    "url": buildAuthorUrl(authorName),
+    "mainEntity": {
+      "@type": "Person",
+      "name": authorName,
+      "jobTitle": "Technology Journalist",
+      "worksFor": {
+        "@type": "Organization",
+        "name": SEO_CONFIG.siteName,
+        "url": SEO_CONFIG.siteUrl
+      }
+    },
+    "significantLinks": articleCount > 0 ? `${articleCount} articles published` : undefined
+  };
+};
+
+export const generateSitemapPageSchema = () => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": `Sitemap - ${SEO_CONFIG.siteName}`,
+    "description": `Complete navigation of all pages and articles on ${SEO_CONFIG.siteName}`,
+    "url": buildCanonicalUrl('/sitemap'),
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": SEO_CONFIG.siteName,
+      "url": SEO_CONFIG.siteUrl
+    }
+  };
+};

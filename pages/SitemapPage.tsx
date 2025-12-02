@@ -3,18 +3,27 @@ import React from 'react';
 import { useArticles } from '../hooks/useArticles';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { getPageSEO } from '../utils/seoConfig';
+import { generateSitemapPageSchema, generateOrganizationSchema } from '../utils/seoHelpers';
 
 const SitemapPage: React.FC = () => {
   const { articles } = useArticles();
 
   const categories = Array.from(new Set(articles.map(a => a.category)));
   const domain = "https://futuretechjournal50.netlify.app";
+  
+  const seoData = getPageSEO('sitemap');
+  const sitemapSchema = generateSitemapPageSchema();
+  const orgSchema = generateOrganizationSchema();
 
   return (
     <div className="max-w-4xl mx-auto py-8">
       <SEO 
-        title="Sitemap - FutureTechJournal"
-        description="Complete list of all pages and articles on FutureTechJournal."
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url="/sitemap"
+        schema={[sitemapSchema, orgSchema]}
       />
       <h1 className="text-3xl font-bold mb-8 text-white">Sitemap</h1>
       

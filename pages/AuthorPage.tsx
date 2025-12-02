@@ -3,8 +3,11 @@ import { useParams } from 'react-router-dom';
 import ArticleCard from '../components/ArticleCard';
 import { useArticles } from '../hooks/useArticles';
 import { ArticleCardSkeleton } from '../components/SkeletonLoader';
-import { unslugify } from '../utils/slugify';
+import { unslugify, slugify } from '../utils/slugify';
 import UserIcon from '../components/icons/UserIcon';
+import SEO from '../components/SEO';
+import { getPageSEO } from '../utils/seoConfig';
+import { generateAuthorPageSchema, generateOrganizationSchema } from '../utils/seoHelpers';
 
 const AuthorPage: React.FC = () => {
   const { authorSlug } = useParams<{ authorSlug: string }>();
@@ -18,8 +21,19 @@ const AuthorPage: React.FC = () => {
     );
   }, [articles, authorName]);
 
+  const seoData = getPageSEO('author', { authorName });
+  const authorSchema = generateAuthorPageSchema(authorName, authorArticles.length);
+  const orgSchema = generateOrganizationSchema();
+
   return (
     <div>
+      <SEO 
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url={`/author/${slugify(authorName)}`}
+        schema={[authorSchema, orgSchema]}
+      />
       <div className="flex items-center mb-8">
         <UserIcon className="w-8 h-8 text-cyan-400 mr-4" />
         <div>

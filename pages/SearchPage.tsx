@@ -11,7 +11,7 @@ import SparklesIcon from '../components/icons/SparklesIcon';
 import ArticleCard from '../components/ArticleCard';
 import CloseIcon from '../components/icons/CloseIcon';
 import SEO from '../components/SEO';
-import { getPageSEO, SEO_CONFIG } from '../utils/seoConfig';
+import { getPageSEO } from '../utils/seoConfig';
 import { generateWebsiteSchema } from '../utils/seoHelpers';
 
 const SearchPage: React.FC = () => {

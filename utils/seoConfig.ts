@@ -13,7 +13,11 @@ export const SEO_CONFIG = {
   },
   contactEmail: 'futuretechjournal@gmail.com',
   locale: 'en_US',
-  categories: ['Technology', 'AI', 'Business', 'Global', 'Product', 'Entertainment', 'Science', 'India', 'US']
+  categories: ['Technology', 'AI', 'Business', 'Global', 'Product', 'Entertainment', 'Science', 'India', 'US'],
+  publisher: {
+    name: 'FutureTechJournal',
+    type: 'NewsMediaOrganization'
+  }
 };
 
 export const buildCanonicalUrl = (path: string): string => {
@@ -96,6 +100,20 @@ export const getPageSEO = (pageType: string, data?: Record<string, string>) => {
       keywords: data?.category 
         ? [data.category, `${data.category} News`, 'Tech News', SEO_CONFIG.siteName]
         : ['Categories', 'Tech News', SEO_CONFIG.siteName]
+    },
+    author: {
+      title: data?.authorName ? `Articles by ${data.authorName} | ${SEO_CONFIG.siteName}` : `Author | ${SEO_CONFIG.siteName}`,
+      description: data?.authorName
+        ? `Read all articles written by ${data.authorName} on ${SEO_CONFIG.siteName}. Expert insights on technology, AI, and innovation.`
+        : `Browse articles by author on ${SEO_CONFIG.siteName}.`,
+      keywords: data?.authorName
+        ? [data.authorName, 'Tech Writer', 'Author', 'Tech Journalism', SEO_CONFIG.siteName]
+        : ['Authors', 'Writers', 'Tech Journalism', SEO_CONFIG.siteName]
+    },
+    aitools: {
+      title: `AI Power Tools | ${SEO_CONFIG.siteName}`,
+      description: `Explore cutting-edge AI capabilities including image generation, analysis, grounded search, and content rewriting powered by Gemini.`,
+      keywords: ['AI Tools', 'Image Generation', 'AI Search', 'Content Rewriting', 'Gemini AI', SEO_CONFIG.siteName]
     }
   };
 

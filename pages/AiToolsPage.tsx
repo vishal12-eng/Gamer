@@ -8,12 +8,15 @@ import DownloadIcon from '../components/icons/DownloadIcon';
 import CloseIcon from '../components/icons/CloseIcon';
 import { useArticles } from '../hooks/useArticles';
 import { mockArticles } from './data/mockData';
+import SEO from '../components/SEO';
+import { getPageSEO } from '../utils/seoConfig';
 
 type Tab = 'generate' | 'animate' | 'edit' | 'analyze' | 'search' | 'rewrite' | 'blog';
 
 const AiToolsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'generate');
+  const seoData = getPageSEO('aitools');
 
   const setTab = (tab: Tab) => {
     setActiveTab(tab);
@@ -29,6 +32,13 @@ const AiToolsPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <SEO 
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url="/ai-tools"
+        noindex={true}
+      />
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">AI Power Tools</h1>
         <p className="mt-4 text-lg text-gray-400">Explore the cutting-edge capabilities of Gemini.</p>
