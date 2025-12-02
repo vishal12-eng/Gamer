@@ -37,7 +37,7 @@ const SEO: React.FC<SEOProps> = ({
   
   const finalDescription = sanitizeDescription(description || SEO_CONFIG.defaultDescription);
   const finalImage = image || SEO_CONFIG.defaultImage;
-  const finalUrl = url ? buildCanonicalUrl(url) : (typeof window !== 'undefined' ? window.location.href : SEO_CONFIG.siteUrl);
+  const finalUrl = url ? buildCanonicalUrl(url) : SEO_CONFIG.siteUrl;
   const finalKeywords = keywords && keywords.length > 0 ? keywords.join(', ') : SEO_CONFIG.defaultKeywords.join(', ');
 
   const robotsContent = noindex 
