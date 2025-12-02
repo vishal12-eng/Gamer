@@ -39,9 +39,9 @@ const ThemeToggle: React.FC = () => {
         } inline-flex items-center justify-center w-6 h-6 transform bg-white rounded-full transition-transform duration-300 ease-in-out`}
       >
         {theme === 'dark' ? (
-          <MoonIcon className="w-5 h-5 text-gray-700 translate-y-[1px]" />
+          <MoonIcon className="w-5 h-5 text-indigo-600 transition-transform translate-y-[1px]" />
         ) : (
-          <SunIcon className="w-5 h-5 text-yellow-500" />
+          <SunIcon className="w-5 h-5 text-yellow-500 transition-transform" />
         )}
       </span>
     </button>
