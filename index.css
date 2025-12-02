@@ -24,11 +24,11 @@
 
   .marquee-content {
     display: inline-block;
-    animation: marquee 20s linear infinite;
+    animation: marquee 50s linear infinite;
   }
 
   .animate-marquee {
-    animation: marquee 20s linear infinite;
+    animation: marquee 50s linear infinite;
   }
 
   /* Premium glassmorphism effects */
