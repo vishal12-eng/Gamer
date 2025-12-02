@@ -5,7 +5,9 @@ import Pagination from '../components/Pagination';
 import { useArticles } from '../hooks/useArticles';
 import { ArticleCardSkeleton } from '../components/SkeletonLoader';
 import SEO from '../components/SEO';
-import { buildBreadcrumbSchema, generateSEOTitle } from '../utils/seoEngine';
+import { buildCategoryBreadcrumb } from '../utils/seoEngine';
+import { generateCollectionPageSchema } from '../utils/seoHelpers';
+import { getPageSEO, buildCategoryUrl } from '../utils/seoConfig';
 
 const ARTICLES_PER_PAGE = 6;
 
@@ -30,24 +32,22 @@ const CategoryPage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const domain = "https://futuretechjournal50.netlify.app";
-  const seoTitle = generateSEOTitle(`${categoryName} News & Articles`);
-  const seoDesc = `Read the latest news and updates about ${categoryName} on FutureTechJournal. Curated articles powered by AI.`;
-  const breadcrumbSchema = buildBreadcrumbSchema([
-      { name: 'Home', url: domain },
-      { name: categoryName, url: `${domain}/category/${name}` }
-  ]);
-  
-  // Specific CollectionPage schema could be added here, but Breadcrumb + SEO meta is sufficient for now.
+  const seoData = getPageSEO('category', { category: categoryName });
+  const breadcrumbSchema = buildCategoryBreadcrumb(categoryName);
+  const collectionSchema = generateCollectionPageSchema(
+    categoryName,
+    filteredArticles,
+    buildCategoryUrl(categoryName)
+  );
   
   return (
     <div>
       <SEO 
-        title={seoTitle}
-        description={seoDesc}
-        keywords={[categoryName, `${categoryName} News`, "Tech News", "FutureTechJournal"]}
-        url={`${domain}/category/${name}`}
-        schema={breadcrumbSchema}
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url={`/category/${name}`}
+        schema={[breadcrumbSchema, collectionSchema]}
       />
 
       <h1 className="text-3xl md:text-4xl font-extrabold mb-8 capitalize text-cyan-400 [text-shadow:0_1px_3px_rgba(0,0,0,0.15)]">

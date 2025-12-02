@@ -11,6 +11,7 @@ import { HomePageSkeleton } from '../components/SkeletonLoader';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import SEO from '../components/SEO';
 import { generateOrganizationSchema, generateWebsiteSchema } from '../utils/seoHelpers';
+import { getPageSEO } from '../utils/seoConfig';
 
 const ARTICLES_PER_PAGE = 6;
 
@@ -76,11 +77,15 @@ const HomePage: React.FC = () => {
 
   const websiteSchema = generateWebsiteSchema();
   const orgSchema = generateOrganizationSchema();
+  const seoData = getPageSEO('home');
 
   return (
     <div className="space-y-16">
       <SEO 
-        title="FutureTechJournal - The Future of AI, Technology, Business & Global News"
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url="/"
         schema={[websiteSchema, orgSchema]}
       />
       

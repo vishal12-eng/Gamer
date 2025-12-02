@@ -11,6 +11,8 @@ import SparklesIcon from '../components/icons/SparklesIcon';
 import ArticleCard from '../components/ArticleCard';
 import CloseIcon from '../components/icons/CloseIcon';
 import SEO from '../components/SEO';
+import { getPageSEO, SEO_CONFIG } from '../utils/seoConfig';
+import { generateWebsiteSchema } from '../utils/seoHelpers';
 
 const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,26 +125,17 @@ const SearchPage: React.FC = () => {
     localStorage.removeItem(HISTORY_KEY);
   };
 
-  const searchActionSchema = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "url": "https://futuretechjournal50.netlify.app/",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {
-        "@type": "EntryPoint",
-        "urlTemplate": "https://futuretechjournal50.netlify.app/search?q={search_term_string}"
-      },
-      "query-input": "required name=search_term_string"
-    }
-  };
+  const seoData = getPageSEO('search', { query: debouncedQuery });
+  const searchSchema = generateWebsiteSchema();
 
   return (
     <div className="max-w-4xl mx-auto">
       <SEO 
-        title={`Search results for "${query}" - FutureTechJournal`}
-        description="Search for the latest news in AI, Technology, and Business."
-        schema={searchActionSchema}
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url={`/search${debouncedQuery ? `?q=${encodeURIComponent(debouncedQuery)}` : ''}`}
+        schema={searchSchema}
       />
       <div className="relative mb-8" ref={searchRef}>
         <input
