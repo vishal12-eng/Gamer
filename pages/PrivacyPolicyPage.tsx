@@ -4,7 +4,7 @@ import LegalPageLayout from '../components/LegalPageLayout';
 
 const PrivacyPolicyPage: React.FC = () => {
   return (
-    <LegalPageLayout title="Privacy Policy">
+    <LegalPageLayout title="Privacy Policy" pageType="privacy">
       <p>
         <strong>Last Updated: June 26, 2024</strong>
       </p>

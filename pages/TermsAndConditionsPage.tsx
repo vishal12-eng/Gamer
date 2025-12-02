@@ -4,7 +4,7 @@ import LegalPageLayout from '../components/LegalPageLayout';
 
 const TermsAndConditionsPage: React.FC = () => {
   return (
-    <LegalPageLayout title="Terms & Conditions">
+    <LegalPageLayout title="Terms & Conditions" pageType="terms">
       <p>
         <strong>Last Updated: June 26, 2024</strong>
       </p>

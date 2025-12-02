@@ -1,12 +1,25 @@
-
 import React from 'react';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import LogoIcon from '../components/icons/LogoIcon';
+import SEO from '../components/SEO';
+import { getPageSEO } from '../utils/seoConfig';
+import { generateAboutPageSchema, generateOrganizationSchema } from '../utils/seoHelpers';
 
 const AboutPage: React.FC = () => {
+  const seoData = getPageSEO('about');
+  const aboutSchema = generateAboutPageSchema();
+  const orgSchema = generateOrganizationSchema();
+
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Hero Section */}
+      <SEO 
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url="/about"
+        schema={[aboutSchema, orgSchema]}
+      />
+
       <section className="text-center my-16">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 text-[#000000] dark:text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">Pioneering the Future of Information</h1>
         <p className="text-lg md:text-xl text-[#111111] dark:text-gray-400 max-w-3xl mx-auto [text-shadow:0_2px_4px_rgba(0,0,0,0.5)]">
@@ -14,7 +27,6 @@ const AboutPage: React.FC = () => {
         </p>
       </section>
 
-      {/* Mission Section */}
       <section className="my-20 text-center max-w-3xl mx-auto">
         <h2 className="text-4xl font-bold mb-4 flex items-center justify-center text-[#000000] dark:text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.15)]">
           <SparklesIcon className="w-8 h-8 mr-3 text-cyan-400" />
@@ -28,7 +40,6 @@ const AboutPage: React.FC = () => {
         </p>
       </section>
 
-      {/* Centered Logo Section */}
       <section className="my-20 flex justify-center py-12">
         <div className="relative w-80 h-80">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-full opacity-30 blur-2xl"></div>
@@ -36,7 +47,6 @@ const AboutPage: React.FC = () => {
         </div>
       </section>
       
-      {/* How We Work Section */}
        <section className="my-20 p-8 bg-gray-900/50 rounded-xl border border-white/10">
         <h2 className="text-4xl font-bold mb-6 text-center text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.15)]">The AI-Powered Pipeline</h2>
         <div className="grid md:grid-cols-3 gap-8 text-center">

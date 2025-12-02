@@ -1,14 +1,20 @@
-
 import React, { useState } from 'react';
 import EmailIcon from '../components/icons/EmailIcon';
 import LocationMarkerIcon from '../components/icons/LocationMarkerIcon';
 import TwitterIcon from '../components/icons/TwitterIcon';
 import LinkedInIcon from '../components/icons/LinkedInIcon';
 import { useToast } from '../hooks/useToast';
+import SEO from '../components/SEO';
+import { getPageSEO } from '../utils/seoConfig';
+import { generateContactPageSchema, generateOrganizationSchema } from '../utils/seoHelpers';
 
 const ContactPage: React.FC = () => {
     const [formState, setFormState] = useState({ name: '', email: '', subject: '', message: ''});
     const { showToast } = useToast();
+    
+    const seoData = getPageSEO('contact');
+    const contactSchema = generateContactPageSchema();
+    const orgSchema = generateOrganizationSchema();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -30,6 +36,14 @@ const ContactPage: React.FC = () => {
 
     return (
         <div className="max-w-5xl mx-auto">
+            <SEO 
+              title={seoData.title}
+              description={seoData.description}
+              keywords={seoData.keywords}
+              url="/contact"
+              schema={[contactSchema, orgSchema]}
+            />
+
             <section className="text-center my-16">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 text-[#000000] dark:text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.15)]">Get In Touch</h1>
                 <p className="text-lg md:text-xl text-[#111111] dark:text-gray-400 max-w-3xl mx-auto">
@@ -38,7 +52,6 @@ const ContactPage: React.FC = () => {
             </section>
 
             <div className="grid md:grid-cols-5 gap-8 md:gap-12 my-20">
-                {/* Contact Info */}
                 <div className="md:col-span-2 space-y-8">
                     <div>
                         <div className="flex items-center space-x-4 mb-3">
@@ -57,7 +70,6 @@ const ContactPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Contact Form */}
                 <div className="md:col-span-3 bg-gray-900/50 p-8 rounded-lg border border-white/10">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid sm:grid-cols-2 gap-6">
@@ -86,8 +98,7 @@ const ContactPage: React.FC = () => {
                     </form>
                 </div>
             </div>
-             {/* Socials */}
-            <section className="text-center my-20">
+             <section className="text-center my-20">
                 <h2 className="text-3xl font-bold mb-6 text-[#000000] dark:text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.15)]">Follow Our Journey</h2>
                  <div className="flex justify-center space-x-6">
                     <a 

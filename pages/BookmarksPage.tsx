@@ -1,14 +1,16 @@
-
-
 import React, { useState, useEffect } from 'react';
 import ArticleCard from '../components/ArticleCard';
 import { Article } from '../types';
 import { useArticles } from '../hooks/useArticles';
 import { ArticleCardSkeleton } from '../components/SkeletonLoader';
+import SEO from '../components/SEO';
+import { getPageSEO } from '../utils/seoConfig';
 
 const BookmarksPage: React.FC = () => {
   const [bookmarkedArticles, setBookmarkedArticles] = useState<Article[]>([]);
   const { articles, loading } = useArticles();
+  
+  const seoData = getPageSEO('bookmarks');
 
   const updateBookmarks = React.useCallback(() => {
     if (loading) return;
@@ -38,6 +40,14 @@ const BookmarksPage: React.FC = () => {
 
   return (
     <div>
+      <SEO 
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url="/bookmarks"
+        noindex={true}
+      />
+
       <h1 className="text-3xl md:text-4xl font-extrabold mb-8 text-[#000000] dark:text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.15)]">
         My <span className="text-cyan-400">Bookmarks</span>
       </h1>

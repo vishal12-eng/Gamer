@@ -4,7 +4,7 @@ import LegalPageLayout from '../components/LegalPageLayout';
 
 const DisclaimerPage: React.FC = () => {
   return (
-    <LegalPageLayout title="Disclaimer">
+    <LegalPageLayout title="Disclaimer" pageType="disclaimer">
       <p>
         <strong>Last Updated: June 26, 2024</strong>
       </p>

@@ -1,15 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
 import { useArticles } from '../hooks/useArticles';
 import { Article } from '../types';
 import ArticleCard from '../components/ArticleCard';
 import { ArticleCardSkeleton } from '../components/SkeletonLoader';
 import SparklesIcon from '../components/icons/SparklesIcon';
+import SEO from '../components/SEO';
+import { getPageSEO } from '../utils/seoConfig';
 
 const ForYouPage: React.FC = () => {
   const { articles, loading } = useArticles();
   const [recommendedArticles, setRecommendedArticles] = useState<Article[]>([]);
   const [hasHistory, setHasHistory] = useState(false);
+  
+  const seoData = getPageSEO('foryou');
 
   useEffect(() => {
     if (loading || articles.length === 0) {
@@ -30,7 +33,6 @@ const ForYouPage: React.FC = () => {
 
     const viewedArticles = articles.filter(a => history.includes(a.slug));
     if (viewedArticles.length === 0) {
-        // History contains slugs for articles that are no longer present
         setRecommendedArticles([]);
         return;
     }
@@ -47,29 +49,28 @@ const ForYouPage: React.FC = () => {
     });
 
     const recommendations = articles
-      .filter(article => !viewedSlugs.has(article.slug)) // Exclude already viewed articles
+      .filter(article => !viewedSlugs.has(article.slug))
       .map(article => {
         let score = 0;
         if (viewedCategories[article.category]) {
-          score += viewedCategories[article.category] * 2; // Category match is important
+          score += viewedCategories[article.category] * 2;
         }
         article.tags.forEach(tag => {
           if (viewedTags[tag]) {
-            score += viewedTags[tag]; // Tag match
+            score += viewedTags[tag];
           }
         });
         return { article, score };
       })
-      .filter(item => item.score > 0) // Only include articles with a score
+      .filter(item => item.score > 0)
       .sort((a, b) => {
         if (b.score !== a.score) {
-          return b.score - a.score; // Higher score first
+          return b.score - a.score;
         }
-        // If scores are equal, prioritize newer articles
         return new Date(b.article.date).getTime() - new Date(a.article.date).getTime();
       })
       .map(item => item.article)
-      .slice(0, 12); // Limit to 12 recommendations
+      .slice(0, 12);
 
     setRecommendedArticles(recommendations);
 
@@ -77,6 +78,13 @@ const ForYouPage: React.FC = () => {
 
   return (
     <div>
+      <SEO 
+        title={seoData.title}
+        description={seoData.description}
+        keywords={seoData.keywords}
+        url="/foryou"
+      />
+
       <div className="flex items-center mb-8">
         <SparklesIcon className="w-8 h-8 text-cyan-400 mr-3" />
         <h1 className="text-3xl md:text-4xl font-extrabold text-[#000000] dark:text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.15)]">
