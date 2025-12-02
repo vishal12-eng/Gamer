@@ -101,6 +101,14 @@ function App() {
                         </ProtectedRoute>
                       } 
                     />
+                    <Route 
+                      path="/admin/ads" 
+                      element={
+                        <ProtectedRoute>
+                          <AdminAdsPage />
+                        </ProtectedRoute>
+                      } 
+                    />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </Suspense>

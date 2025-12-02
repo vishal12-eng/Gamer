@@ -3,8 +3,6 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import LogoIcon from './icons/LogoIcon';
 import SearchIcon from './icons/SearchIcon';
-import MenuIcon from './icons/MenuIcon';
-import CloseIcon from './icons/CloseIcon';
 import UserIcon from './icons/UserIcon';
 import { NAV_LINKS } from '../constants';
 import { useArticles } from '../hooks/useArticles';

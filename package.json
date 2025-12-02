@@ -1,6 +1,7 @@
 {
   "name": "futuretechjournal",
   "version": "1.0.0",
+  "type": "module",
   "description": "An ultra-modern, AI-powered news and blog website.",
   "private": true,
   "scripts": {
@@ -18,16 +19,20 @@
     "@google/genai": "^1.29.1",
     "@neondatabase/serverless": "^1.0.2",
     "@netlify/functions": "^2.6.0",
+    "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^24.10.1",
     "@types/ws": "^8.18.1",
+    "autoprefixer": "^10.4.22",
     "cors": "^2.8.5",
     "drizzle-kit": "^0.31.7",
     "drizzle-orm": "^0.44.7",
     "express": "^5.1.0",
+    "postcss": "^8.5.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-helmet-async": "2.0.5",
     "react-router-dom": "6.22.3",
+    "tailwindcss": "^4.1.17",
     "ws": "^8.18.3"
   },
   "devDependencies": {
