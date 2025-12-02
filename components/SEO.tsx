@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { SEO_CONFIG, buildCanonicalUrl, sanitizeDescription, sanitizeTitle } from '../utils/seoConfig';
 
 interface SEOProps {
   title?: string;
@@ -10,7 +11,10 @@ interface SEOProps {
   type?: 'website' | 'article';
   author?: string;
   publishedTime?: string;
+  modifiedTime?: string;
+  section?: string;
   schema?: object | object[];
+  noindex?: boolean;
 }
 
 const SEO: React.FC<SEOProps> = ({
@@ -22,49 +26,63 @@ const SEO: React.FC<SEOProps> = ({
   type = 'website',
   author,
   publishedTime,
-  schema
+  modifiedTime,
+  section,
+  schema,
+  noindex = false
 }) => {
-  const siteTitle = "FutureTechJournal";
-  const defaultDescription = "An ultra-modern, AI-powered news and blog website covering the latest in Artificial Intelligence, Technology, Business, and Global Innovation.";
-  const defaultImage = "https://picsum.photos/seed/futuretech/1200/630";
-  const defaultKeywords = "AI News, Technology, Future Tech, Business News, Artificial Intelligence, Tech Blog";
+  const fullTitle = title 
+    ? (title.includes(SEO_CONFIG.siteName) ? sanitizeTitle(title) : `${sanitizeTitle(title)} | ${SEO_CONFIG.siteName}`)
+    : SEO_CONFIG.defaultTitle;
+  
+  const finalDescription = sanitizeDescription(description || SEO_CONFIG.defaultDescription);
+  const finalImage = image || SEO_CONFIG.defaultImage;
+  const finalUrl = url ? buildCanonicalUrl(url) : (typeof window !== 'undefined' ? window.location.href : SEO_CONFIG.siteUrl);
+  const finalKeywords = keywords && keywords.length > 0 ? keywords.join(', ') : SEO_CONFIG.defaultKeywords.join(', ');
 
-  const fullTitle = title ? (title.includes(siteTitle) ? title : `${title} | ${siteTitle}`) : siteTitle;
-  const finalDescription = description || defaultDescription;
-  const finalImage = image || defaultImage;
-  const finalUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
-  const finalKeywords = keywords && keywords.length > 0 ? keywords.join(", ") : defaultKeywords;
+  const robotsContent = noindex 
+    ? 'noindex, nofollow' 
+    : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
   return (
     <Helmet>
-      {/* Standard Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="description" content={finalDescription} />
       <meta name="keywords" content={finalKeywords} />
       <link rel="canonical" href={finalUrl} />
-      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+      <meta name="robots" content={robotsContent} />
 
-      {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
       <meta property="og:url" content={finalUrl} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={finalDescription} />
       <meta property="og:image" content={finalImage} />
-      <meta property="og:site_name" content={siteTitle} />
-      {publishedTime && <meta property="article:published_time" content={publishedTime} />}
-      {author && <meta property="article:author" content={author} />}
+      <meta property="og:site_name" content={SEO_CONFIG.siteName} />
+      <meta property="og:locale" content={SEO_CONFIG.locale} />
+      
+      {type === 'article' && publishedTime && (
+        <meta property="article:published_time" content={publishedTime} />
+      )}
+      {type === 'article' && modifiedTime && (
+        <meta property="article:modified_time" content={modifiedTime} />
+      )}
+      {type === 'article' && author && (
+        <meta property="article:author" content={author} />
+      )}
+      {type === 'article' && section && (
+        <meta property="article:section" content={section} />
+      )}
 
-      {/* Twitter Cards */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:creator" content="@tech_futur32551" />
+      <meta name="twitter:site" content={SEO_CONFIG.twitterHandle} />
+      <meta name="twitter:creator" content={SEO_CONFIG.twitterHandle} />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={finalDescription} />
       <meta name="twitter:image" content={finalImage} />
 
-      {/* JSON-LD Schema */}
       {schema && (
         <script type="application/ld+json">
-          {JSON.stringify(schema)}
+          {JSON.stringify(Array.isArray(schema) ? schema : [schema])}
         </script>
       )}
     </Helmet>

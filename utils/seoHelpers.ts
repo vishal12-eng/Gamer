@@ -1,14 +1,19 @@
 import { Article } from '../types';
+import { SEO_CONFIG, buildCanonicalUrl, buildArticleUrl, buildAuthorUrl, sanitizeDescription } from './seoConfig';
 
 export const generateWebsiteSchema = () => {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "FutureTechJournal",
-    "url": "https://futuretechjournal50.netlify.app",
+    "name": SEO_CONFIG.siteName,
+    "url": SEO_CONFIG.siteUrl,
+    "description": SEO_CONFIG.defaultDescription,
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://futuretechjournal50.netlify.app/search?q={search_term_string}",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${SEO_CONFIG.siteUrl}/search?q={search_term_string}`
+      },
       "query-input": "required name=search_term_string"
     }
   };
@@ -18,49 +23,60 @@ export const generateOrganizationSchema = () => {
   return {
     "@context": "https://schema.org",
     "@type": "NewsMediaOrganization",
-    "name": "FutureTechJournal",
-    "url": "https://futuretechjournal50.netlify.app",
+    "name": SEO_CONFIG.siteName,
+    "url": SEO_CONFIG.siteUrl,
     "logo": {
       "@type": "ImageObject",
-      "url": "https://futuretechjournal50.netlify.app/logo.png", // Assuming a logo exists or using a placeholder
+      "url": SEO_CONFIG.logoUrl,
       "width": 600,
       "height": 60
     },
     "sameAs": [
-      "https://twitter.com/tech_futur32551",
-      "https://www.linkedin.com/in/future-tech-journal-354071392/"
-    ]
+      SEO_CONFIG.socialLinks.twitter,
+      SEO_CONFIG.socialLinks.linkedin
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "email": SEO_CONFIG.contactEmail
+    }
   };
 };
 
 export const generateNewsArticleSchema = (article: Article) => {
+  const articleUrl = buildArticleUrl(article.slug);
+  const authorUrl = buildAuthorUrl(article.author);
+  const description = sanitizeDescription(article.summary || article.content, 200);
+  
   return {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    "headline": article.title,
-    "description": article.summary,
-    "image": [article.imageUrl],
+    "headline": article.title.substring(0, 110),
+    "description": description,
+    "image": article.imageUrl ? [article.imageUrl] : [SEO_CONFIG.defaultImage],
     "datePublished": article.date,
-    "dateModified": article.date,
+    "dateModified": article.lastModified || article.date,
     "author": {
       "@type": "Person",
       "name": article.author,
-      "url": `https://futuretechjournal50.netlify.app/author/${article.author.replace(/\s+/g, '-').toLowerCase()}`
+      "url": authorUrl
     },
     "publisher": {
       "@type": "Organization",
-      "name": "FutureTechJournal",
+      "name": SEO_CONFIG.siteName,
       "logo": {
         "@type": "ImageObject",
-        "url": "https://futuretechjournal50.netlify.app/logo.png"
+        "url": SEO_CONFIG.logoUrl
       }
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://futuretechjournal50.netlify.app/article/${article.slug}`
+      "@id": articleUrl
     },
     "articleSection": article.category,
-    "keywords": article.tags.join(", ")
+    "keywords": article.tags?.join(', ') || article.category,
+    "isAccessibleForFree": true,
+    "inLanguage": "en-US"
   };
 };
 
@@ -77,6 +93,35 @@ export const generateBreadcrumbSchema = (items: { name: string; item: string }[]
   };
 };
 
+export const generateCollectionPageSchema = (
+  categoryName: string, 
+  articles: Article[],
+  categoryUrl: string
+) => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": `${categoryName} News & Articles`,
+    "description": `Latest ${categoryName} news and articles from ${SEO_CONFIG.siteName}`,
+    "url": categoryUrl,
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": SEO_CONFIG.siteName,
+      "url": SEO_CONFIG.siteUrl
+    },
+    "mainEntity": {
+      "@type": "ItemList",
+      "numberOfItems": articles.length,
+      "itemListElement": articles.slice(0, 10).map((article, index) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "url": buildArticleUrl(article.slug),
+        "name": article.title
+      }))
+    }
+  };
+};
+
 export const generateFAQSchema = (questions: { question: string; answer: string }[]) => {
   return {
     "@context": "https://schema.org",
@@ -89,5 +134,38 @@ export const generateFAQSchema = (questions: { question: string; answer: string 
         "text": q.answer
       }
     }))
+  };
+};
+
+export const generateAboutPageSchema = () => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": `About ${SEO_CONFIG.siteName}`,
+    "description": `Learn about ${SEO_CONFIG.siteName}, an AI-powered news platform pioneering the future of technology journalism.`,
+    "url": buildCanonicalUrl('/about'),
+    "mainEntity": {
+      "@type": "Organization",
+      "name": SEO_CONFIG.siteName,
+      "description": SEO_CONFIG.defaultDescription,
+      "url": SEO_CONFIG.siteUrl,
+      "logo": SEO_CONFIG.logoUrl
+    }
+  };
+};
+
+export const generateContactPageSchema = () => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": `Contact ${SEO_CONFIG.siteName}`,
+    "description": `Get in touch with ${SEO_CONFIG.siteName}. Have a news tip, question, or collaboration idea?`,
+    "url": buildCanonicalUrl('/contact'),
+    "mainEntity": {
+      "@type": "Organization",
+      "name": SEO_CONFIG.siteName,
+      "email": SEO_CONFIG.contactEmail,
+      "url": SEO_CONFIG.siteUrl
+    }
   };
 };
