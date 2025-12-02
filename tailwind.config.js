@@ -146,5 +146,10 @@ export default {
       },
     },
   },
+  safelist: [
+    "marquee",
+    "marquee-content",
+    "animate-marquee"
+  ],
   plugins: [],
 }
