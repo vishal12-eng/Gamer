@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { CATEGORIES } from '../constants';
 import LogoIcon from './icons/LogoIcon';
 import TwitterIcon from './icons/TwitterIcon';
@@ -12,6 +12,25 @@ const Footer: React.FC = () => {
   const [subscribed, setSubscribed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const footerRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+
+  const isActiveCategory = (categoryPath: string): boolean => {
+    const pathname = location.pathname.toLowerCase();
+    const category = categoryPath.replace('/category/', '').toLowerCase();
+    
+    if (pathname.includes(`/category/${category}`)) {
+      return true;
+    }
+    
+    if (pathname.startsWith('/article/')) {
+      const articleSlug = pathname.replace('/article/', '');
+      if (articleSlug.includes(category) || articleSlug.includes(category.replace(' ', '-'))) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
   
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -55,19 +74,29 @@ const Footer: React.FC = () => {
     }
   };
 
-  const renderLink = (to: string, text: string) => (
-    <li key={text}>
-      <Link 
-        to={to} 
-        className="group block text-sm text-gray-400 hover:text-cyan-400 transition-all duration-300 py-1"
-      >
-        <span className="relative">
-          {text}
-          <span className="absolute bottom-0 left-0 w-0 h-px bg-gradient-to-r from-cyan-400 to-purple-400 group-hover:w-full transition-all duration-300"></span>
-        </span>
-      </Link>
-    </li>
-  );
+  const renderLink = (to: string, text: string, isCategory = false) => {
+    const isActive = isCategory && isActiveCategory(to);
+    
+    return (
+      <li key={text}>
+        <Link 
+          to={to} 
+          className={`group block text-sm transition-all duration-300 py-1 ${
+            isActive 
+              ? 'text-cyan-400 font-semibold' 
+              : 'text-gray-400 hover:text-cyan-400'
+          }`}
+        >
+          <span className="relative">
+            {text}
+            <span className={`absolute bottom-0 left-0 h-px bg-gradient-to-r from-cyan-400 to-purple-400 transition-all duration-300 ${
+              isActive ? 'w-full' : 'w-0 group-hover:w-full'
+            }`}></span>
+          </span>
+        </Link>
+      </li>
+    );
+  };
   
   return (
     <footer 
@@ -157,7 +186,7 @@ const Footer: React.FC = () => {
               Categories
             </h3>
             <ul className="space-y-2">
-              {CATEGORIES.map(cat => renderLink(`/category/${cat.toLowerCase()}`, cat))}
+              {CATEGORIES.map(cat => renderLink(`/category/${cat.toLowerCase()}`, cat, true))}
             </ul>
           </div>
 
