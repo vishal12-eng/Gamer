@@ -13,6 +13,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConsentBanner from './components/ConsentBanner';
 import ErrorBoundary from './components/ErrorBoundary';
+import ScrollToTop from './components/ScrollToTop';
 
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ArticlePage = lazy(() => import('./pages/ArticlePage'));
@@ -51,76 +52,78 @@ function App() {
         <ToastContext.Provider value={{ showToast }}>
           <ArticleProvider>
             <HashRouter>
-            <div className="flex flex-col min-h-screen font-sans bg-gray-100 dark:bg-transparent transition-colors duration-500">
-              <Header />
-              <main className="flex-grow container mx-auto px-4 py-8 pt-24">
-                <ErrorBoundary>
-                  <Suspense fallback={<HomePageSkeleton />}>
-                    <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/foryou" element={<ForYouPage />} />
-                    <Route path="/article/:slug" element={<ArticlePage />} />
-                    <Route path="/author/:authorSlug" element={<AuthorPage />} />
-                    <Route path="/category/:name" element={<CategoryPage />} />
-                    <Route path="/bookmarks" element={<BookmarksPage />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/about" element={<AboutPage />} />
-                    <Route path="/contact" element={<ContactPage />} />
-                    <Route path="/disclaimer" element={<DisclaimerPage />} />
-                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                    <Route path="/terms" element={<TermsAndConditionsPage />} />
-                    <Route path="/sitemap" element={<SitemapPage />} />
-                    <Route path="/admin/login" element={<AdminLogin />} />
-                    <Route 
-                      path="/admin/dashboard" 
-                      element={
-                        <ProtectedRoute>
-                          <AdminDashboardPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/ai-tools" 
-                      element={
-                        <ProtectedRoute>
-                          <AiToolsPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/articles" 
-                      element={
-                        <ProtectedRoute>
-                          <AdminArticleListPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/articles/:slug" 
-                      element={
-                        <ProtectedRoute>
-                          <AdminArticleEditorPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/ads" 
-                      element={
-                        <ProtectedRoute>
-                          <AdminAdsPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </Suspense>
-                </ErrorBoundary>
-              </main>
-              <Chatbot />
-              <Footer />
-              <ConsentBanner />
-              <Toast message={toastMessage} onClose={closeToast} />
-            </div>
+              <ScrollToTop>
+                <div className="flex flex-col min-h-screen font-sans bg-gray-100 dark:bg-transparent transition-colors duration-500">
+                  <Header />
+                  <main className="flex-grow container mx-auto px-4 py-8 pt-24">
+                    <ErrorBoundary>
+                      <Suspense fallback={<HomePageSkeleton />}>
+                        <Routes>
+                          <Route path="/" element={<HomePage />} />
+                          <Route path="/foryou" element={<ForYouPage />} />
+                          <Route path="/article/:slug" element={<ArticlePage />} />
+                          <Route path="/author/:authorSlug" element={<AuthorPage />} />
+                          <Route path="/category/:name" element={<CategoryPage />} />
+                          <Route path="/bookmarks" element={<BookmarksPage />} />
+                          <Route path="/search" element={<SearchPage />} />
+                          <Route path="/about" element={<AboutPage />} />
+                          <Route path="/contact" element={<ContactPage />} />
+                          <Route path="/disclaimer" element={<DisclaimerPage />} />
+                          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                          <Route path="/terms" element={<TermsAndConditionsPage />} />
+                          <Route path="/sitemap" element={<SitemapPage />} />
+                          <Route path="/admin/login" element={<AdminLogin />} />
+                          <Route 
+                            path="/admin/dashboard" 
+                            element={
+                              <ProtectedRoute>
+                                <AdminDashboardPage />
+                              </ProtectedRoute>
+                            } 
+                          />
+                          <Route 
+                            path="/ai-tools" 
+                            element={
+                              <ProtectedRoute>
+                                <AiToolsPage />
+                              </ProtectedRoute>
+                            } 
+                          />
+                          <Route 
+                            path="/admin/articles" 
+                            element={
+                              <ProtectedRoute>
+                                <AdminArticleListPage />
+                              </ProtectedRoute>
+                            } 
+                          />
+                          <Route 
+                            path="/admin/articles/:slug" 
+                            element={
+                              <ProtectedRoute>
+                                <AdminArticleEditorPage />
+                              </ProtectedRoute>
+                            } 
+                          />
+                          <Route 
+                            path="/admin/ads" 
+                            element={
+                              <ProtectedRoute>
+                                <AdminAdsPage />
+                              </ProtectedRoute>
+                            } 
+                          />
+                          <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                      </Suspense>
+                    </ErrorBoundary>
+                  </main>
+                  <Chatbot />
+                  <Footer />
+                  <ConsentBanner />
+                  <Toast message={toastMessage} onClose={closeToast} />
+                </div>
+              </ScrollToTop>
             </HashRouter>
           </ArticleProvider>
         </ToastContext.Provider>
