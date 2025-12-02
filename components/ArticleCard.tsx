@@ -53,7 +53,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, index = 0 }) => {
   return (
     <Link 
       to={`/article/${article.slug}`} 
-      className={`reveal ${staggerClass} block group relative rounded-2xl overflow-hidden h-96 text-white
+      className={`${staggerClass} block group relative rounded-2xl overflow-hidden h-96 text-white
         shadow-lg shadow-black/20
         hover:shadow-card-hover
         hover:-translate-y-3 hover:scale-[1.02]
