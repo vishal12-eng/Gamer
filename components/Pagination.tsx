@@ -24,7 +24,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   const getPageNumbers = () => {
     const pageNumbers: (number | string)[] = [];
     const maxPagesToShow = 3;
-    const pageBuffer = 2; // Pages to show on each side of the current page
+    const pageBuffer = 2;
 
     if (totalPages <= maxPagesToShow + pageBuffer) {
         for (let i = 1; i <= totalPages; i++) {
@@ -52,44 +52,81 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   };
 
   const pageNumbers = getPageNumbers();
-  const baseButtonClasses = "px-4 py-2 rounded-md text-sm font-medium transition-colors";
-  const disabledButtonClasses = "bg-gray-800 text-gray-500 cursor-not-allowed";
-  const enabledButtonClasses = "bg-gray-700 hover:bg-cyan-600 text-gray-200 hover:text-white";
-  const activeButtonClasses = "bg-cyan-600 text-white";
   
   return (
-    <nav className="flex items-center justify-center space-x-2 mt-12">
+    <nav className="flex items-center justify-center gap-2 mt-12">
+      {/* Previous Button */}
       <button
         onClick={handlePrevious}
         disabled={currentPage === 1}
-        className={`${baseButtonClasses} ${currentPage === 1 ? disabledButtonClasses : enabledButtonClasses}`}
+        className={`group relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 overflow-hidden
+          ${currentPage === 1 
+            ? 'bg-gray-800/50 text-gray-500 cursor-not-allowed' 
+            : 'glass text-gray-200 hover:text-white hover:border-cyan-500/50 hover-glow-cyan'
+          }`}
         aria-label="Go to previous page"
       >
-        Previous
+        <svg 
+          className={`w-4 h-4 transition-transform duration-300 ${currentPage !== 1 ? 'group-hover:-translate-x-1' : ''}`} 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        <span className="hidden sm:inline">Previous</span>
       </button>
 
-      {pageNumbers.map((number, index) =>
-        typeof number === 'string' ? (
-          <span key={`ellipsis-${index}`} className="px-4 py-2 text-gray-400">...</span>
-        ) : (
-          <button
-            key={number}
-            onClick={() => onPageChange(number)}
-            className={`${baseButtonClasses} ${currentPage === number ? activeButtonClasses : enabledButtonClasses}`}
-            aria-current={currentPage === number ? 'page' : undefined}
-          >
-            {number}
-          </button>
-        )
-      )}
+      {/* Page Numbers */}
+      <div className="flex items-center gap-1">
+        {pageNumbers.map((number, index) =>
+          typeof number === 'string' ? (
+            <span 
+              key={`ellipsis-${index}`} 
+              className="px-2 text-gray-500 select-none"
+            >
+              ...
+            </span>
+          ) : (
+            <button
+              key={number}
+              onClick={() => onPageChange(number)}
+              className={`relative w-10 h-10 rounded-xl text-sm font-medium transition-all duration-300 overflow-hidden
+                ${currentPage === number 
+                  ? 'bg-gradient-to-br from-cyan-500 to-purple-600 text-white shadow-hero-glow scale-110' 
+                  : 'glass text-gray-300 hover:text-white hover:border-cyan-500/30'
+                }`}
+              aria-current={currentPage === number ? 'page' : undefined}
+            >
+              <span className="relative z-10">{number}</span>
+              {currentPage !== number && (
+                <span className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+              )}
+            </button>
+          )
+        )}
+      </div>
 
+      {/* Next Button */}
       <button
         onClick={handleNext}
         disabled={currentPage === totalPages}
-        className={`${baseButtonClasses} ${currentPage === totalPages ? disabledButtonClasses : enabledButtonClasses}`}
+        className={`group relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 overflow-hidden
+          ${currentPage === totalPages 
+            ? 'bg-gray-800/50 text-gray-500 cursor-not-allowed' 
+            : 'glass text-gray-200 hover:text-white hover:border-cyan-500/50 hover-glow-cyan'
+          }`}
         aria-label="Go to next page"
       >
-        Next
+        <span className="hidden sm:inline">Next</span>
+        <svg 
+          className={`w-4 h-4 transition-transform duration-300 ${currentPage !== totalPages ? 'group-hover:translate-x-1' : ''}`} 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
       </button>
     </nav>
   );
