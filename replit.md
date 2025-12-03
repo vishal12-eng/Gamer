@@ -62,7 +62,13 @@ Generates production builds with:
 
 ## Key Features
 - **AI-Powered Content**: Summarization, translation, text-to-speech, image generation
-- **AI Article Expansion**: Auto-expands short articles to 800-1500+ words with SEO structure
+- **SEO Article Expansion System**: Auto-expands articles with complete SEO optimization:
+  - Minimum 800-1500+ words with hierarchical H1-H4 headings
+  - Meta title (55 chars), meta description (155 chars), focus keyword
+  - LSI keywords, internal/external links, image alt texts
+  - FAQ section with 3-5 questions at end of article
+  - Server-side validation ensures quality (word count, SEO fields, heading structure)
+  - Client-side compatibility handling regenerates outdated cached entries
 - **Article Management**: Admin dashboard for creating and editing articles
 - **Bookmarks**: Save favorite articles locally
 - **Search**: Full-text article search with AI recommendations
