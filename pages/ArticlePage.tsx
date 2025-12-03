@@ -5,7 +5,7 @@ import { Article, Category } from '../types';
 import ReadingProgressBar from '../components/ReadingProgressBar';
 import ArticleCard from '../components/ArticleCard';
 import { summarizeText, translateText, suggestTags, analyzeReadability, improveReadability } from '../services/geminiService';
-import { expandArticleWithSEO, getExpandedArticleFromDB, saveExpandedArticleToDB } from '../services/articleExpansionService';
+import { expandArticleWithSEO, getExpandedArticleFromDB, saveExpandedArticleToDB, ExpandedArticleResult } from '../services/articleExpansionService';
 import { fetchPixabayImage } from '../services/pixabayService';
 import { 
   generateSEOTitle, 
@@ -212,8 +212,8 @@ const ArticlePage: React.FC = () => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isImageLoading, setIsImageLoading] = useState(true);
   
-  // Expansion State
-  const [expandedContent, setExpandedContent] = useState<string | null>(null);
+  // Expansion State - Full SEO Result Object
+  const [expandedResult, setExpandedResult] = useState<ExpandedArticleResult | null>(null);
   const [isExpanding, setIsExpanding] = useState(false);
 
   const [isSummarizing, setIsSummarizing] = useState(false);
@@ -272,16 +272,16 @@ const ArticlePage: React.FC = () => {
       }
       setIsReading(false);
       
-      setExpandedContent(null);
+      setExpandedResult(null);
       setIsExpanding(false);
 
       // --- Load Expanded Content from DB or Auto-Expand ---
       const loadExpandedContent = async () => {
         try {
-          const dbContent = await getExpandedArticleFromDB(foundArticle.slug);
-          if (dbContent) {
-            console.log(`[ArticlePage] Loaded expanded content from DB for: ${foundArticle.slug}`);
-            setExpandedContent(dbContent);
+          const dbResult = await getExpandedArticleFromDB(foundArticle.slug);
+          if (dbResult && dbResult.expandedContent) {
+            console.log(`[ArticlePage] Loaded SEO-expanded content from DB for: ${foundArticle.slug}`);
+            setExpandedResult(dbResult);
           } else {
             triggerAutoExpansion(foundArticle);
           }
@@ -361,7 +361,7 @@ const ArticlePage: React.FC = () => {
 
   const triggerAutoExpansion = async (articleToExpand: Article) => {
     setIsExpanding(true);
-    console.log(`[ArticlePage] Starting AI expansion for: ${articleToExpand.title}`);
+    console.log(`[ArticlePage] Starting SEO AI expansion for: ${articleToExpand.title}`);
     
     try {
       const result = await expandArticleWithSEO(
@@ -371,31 +371,35 @@ const ArticlePage: React.FC = () => {
       );
       
       if (result.success && result.expandedContent) {
-        console.log(`[ArticlePage] AI expansion complete: ${result.wordCount} words, readability: ${result.readabilityScore}`);
-        setExpandedContent(result.expandedContent);
+        console.log(`[ArticlePage] SEO expansion complete: ${result.wordCount} words, focus: ${result.focusKeyword}`);
+        setExpandedResult(result);
         
-        await saveExpandedArticleToDB(
+        const saveResult = await saveExpandedArticleToDB(
           articleToExpand.slug,
           articleToExpand.title,
           articleToExpand.content,
-          result.expandedContent,
-          articleToExpand.category,
-          result.wordCount,
-          result.readabilityScore
+          result,
+          articleToExpand.category
         );
-        console.log(`[ArticlePage] Saved expanded article to DB: ${articleToExpand.slug}`);
+        
+        if (saveResult.success) {
+          console.log(`[ArticlePage] Saved SEO article to DB: ${articleToExpand.slug}`);
+        } else {
+          console.warn(`[ArticlePage] Failed to save to DB (but content displayed): ${saveResult.error}`);
+        }
       } else {
-        console.error('[ArticlePage] AI expansion failed:', result.error);
-        setExpandedContent(null);
+        console.error('[ArticlePage] SEO expansion failed:', result.error);
+        setExpandedResult(null);
       }
     } catch (error) {
       console.error("[ArticlePage] Failed to expand article:", error);
-      setExpandedContent(null); 
+      setExpandedResult(null); 
     } finally {
       setIsExpanding(false);
     }
   };
 
+  const expandedContent = expandedResult?.expandedContent || '';
   const contentForProcessing = (expandedContent && expandedContent.length > 0) ? expandedContent : (article?.content || '');
 
   const handleSummarize = async () => {
@@ -631,12 +635,15 @@ const ArticlePage: React.FC = () => {
       isBookmarked, articleReadingMode
   };
 
-  // SEO Generation using the new Engine
+  // SEO Generation - Use AI-generated SEO data when available, fallback to engine
   const domain = "https://futuretechjournal50.netlify.app";
-  const seoTitle = generateSEOTitle(article.title);
-  const metaDescription = generateMetaDescription(article.summary || article.content);
-  const keywords = generateKeywords(article.title, article.category, article.tags);
+  const seoTitle = expandedResult?.metaTitle || generateSEOTitle(article.title);
+  const metaDescription = expandedResult?.metaDescription || generateMetaDescription(article.summary || article.content);
+  const keywords = (expandedResult?.keywords && expandedResult.keywords.length > 0) 
+    ? expandedResult.keywords 
+    : generateKeywords(article.title, article.category, article.tags);
   const articleModifiedTime = article.lastModified || article.date;
+  const imageAlt = expandedResult?.imageAltTexts?.[0] || `${article.title} - ${article.category}`;
   const schema = [
     buildArticleSchema(article, domain),
     buildBreadcrumbSchema([
@@ -710,7 +717,7 @@ const ArticlePage: React.FC = () => {
         <figure className="my-8">
           <img 
             src={imageUrl} 
-            alt={article.title} 
+            alt={imageAlt} 
             itemProp="image"
             loading="lazy"
             className={`w-full rounded-xl shadow-lg transition-opacity duration-300 ${isImageLoading ? 'opacity-50' : 'opacity-100'}`}
@@ -824,6 +831,95 @@ const ArticlePage: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* FAQ Section - From SEO Expanded Content */}
+        {expandedResult?.faq && expandedResult.faq.length > 0 && (
+          <section className="mt-12 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-2xl p-6 lg:p-8">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+              <svg className="w-6 h-6 mr-3 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-4" itemScope itemType="https://schema.org/FAQPage">
+              {expandedResult.faq.map((item, index) => (
+                <div 
+                  key={index} 
+                  className="border border-gray-700/50 rounded-lg overflow-hidden"
+                  itemScope 
+                  itemProp="mainEntity" 
+                  itemType="https://schema.org/Question"
+                >
+                  <div className="bg-gray-800/30 px-5 py-4">
+                    <h3 className="text-lg font-semibold text-cyan-300" itemProp="name">
+                      {item.question}
+                    </h3>
+                  </div>
+                  <div 
+                    className="px-5 py-4 text-gray-300 leading-relaxed"
+                    itemScope 
+                    itemProp="acceptedAnswer" 
+                    itemType="https://schema.org/Answer"
+                  >
+                    <p itemProp="text">{item.answer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Internal Links - Related Categories */}
+        {expandedResult?.internalLinks && expandedResult.internalLinks.length > 0 && (
+          <section className="mt-8">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              Explore Related Topics
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {expandedResult.internalLinks.map((link, index) => (
+                <Link
+                  key={index}
+                  to={link.url}
+                  className="inline-flex items-center px-4 py-2 bg-gray-800/50 hover:bg-cyan-900/50 border border-gray-700/50 hover:border-cyan-600/50 rounded-lg text-gray-300 hover:text-cyan-300 transition-all text-sm"
+                >
+                  {link.text}
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* External References */}
+        {expandedResult?.externalLinks && expandedResult.externalLinks.length > 0 && (
+          <section className="mt-6">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              References & Further Reading
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              {expandedResult.externalLinks.map((link, index) => (
+                <a
+                  key={index}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-4 py-2 bg-gray-800/30 hover:bg-gray-700/50 border border-gray-700/30 rounded-lg text-gray-400 hover:text-gray-200 transition-all text-sm"
+                >
+                  {link.text}
+                  <span className="ml-2 text-xs text-gray-500">({link.source})</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
 
         {suggestedTags.length > 0 && (
           <AiFeatureBox

@@ -658,10 +658,56 @@ app.get('/api/expanded-article/:slug', (req, res) => {
 
 app.post('/api/expanded-article', (req, res) => {
   try {
-    const { slug, originalTitle, originalContent, expandedContent, category, wordCount, readabilityScore } = req.body;
+    const { 
+      slug, 
+      originalTitle, 
+      originalContent, 
+      expandedContent, 
+      category, 
+      wordCount, 
+      readabilityScore,
+      metaTitle,
+      metaDescription,
+      focusKeyword,
+      keywords,
+      internalLinks,
+      externalLinks,
+      imageAltTexts,
+      faq
+    } = req.body;
     
+    // Required field validation
     if (!slug || !expandedContent) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields: slug and expandedContent are required' });
+    }
+    
+    // Minimum word count validation (must be at least 800 words)
+    if (!wordCount || wordCount < 800) {
+      console.warn(`[Expanded Articles] Rejected article ${slug}: Word count too low (${wordCount || 0})`);
+      return res.status(400).json({ error: `Word count too low: ${wordCount || 0}. Minimum 800 words required.` });
+    }
+    
+    // SEO fields validation
+    if (!metaTitle || metaTitle.length < 10) {
+      console.warn(`[Expanded Articles] Rejected article ${slug}: Missing or too short metaTitle`);
+      return res.status(400).json({ error: 'Missing or invalid metaTitle (minimum 10 characters)' });
+    }
+    
+    if (!metaDescription || metaDescription.length < 50) {
+      console.warn(`[Expanded Articles] Rejected article ${slug}: Missing or too short metaDescription`);
+      return res.status(400).json({ error: 'Missing or invalid metaDescription (minimum 50 characters)' });
+    }
+    
+    if (!focusKeyword || focusKeyword.length < 3) {
+      console.warn(`[Expanded Articles] Rejected article ${slug}: Missing focusKeyword`);
+      return res.status(400).json({ error: 'Missing or invalid focusKeyword' });
+    }
+    
+    // Structure validation - check for H2 headings
+    const hasH2 = /<h2[^>]*>/i.test(expandedContent);
+    if (!hasH2) {
+      console.warn(`[Expanded Articles] Rejected article ${slug}: Missing H2 structure`);
+      return res.status(400).json({ error: 'Article must contain H2 headings for proper structure' });
     }
     
     expandedArticlesCache[slug] = {
@@ -672,13 +718,21 @@ app.post('/api/expanded-article', (req, res) => {
       category,
       wordCount,
       readabilityScore,
+      metaTitle: metaTitle,
+      metaDescription: metaDescription,
+      focusKeyword: focusKeyword,
+      keywords: Array.isArray(keywords) ? keywords : [],
+      internalLinks: Array.isArray(internalLinks) ? internalLinks : [],
+      externalLinks: Array.isArray(externalLinks) ? externalLinks : [],
+      imageAltTexts: Array.isArray(imageAltTexts) ? imageAltTexts : [],
+      faq: Array.isArray(faq) ? faq : [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     
     saveExpandedArticles(expandedArticlesCache);
     
-    console.log(`[Expanded Articles] Saved article: ${slug} (${wordCount} words)`);
+    console.log(`[Expanded Articles] Saved SEO article: ${slug} (${wordCount} words, focus: ${focusKeyword})`);
     res.json({ success: true, slug });
   } catch (error) {
     console.error('[Expanded Articles] Save error:', error.message);
