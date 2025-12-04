@@ -77,7 +77,7 @@ Generates production builds with:
 - **SEO Optimized**: Sitemap, robots.txt, meta tags
 - **Pixabay Integration**: Real images for articles (both cards and detail pages)
 - **Mailchimp Integration**: Newsletter subscription with email validation
-- **A-ADS Integration**: Clean, Google-safe banner ads with responsive design
+- **Dynamic Ads Manager**: Admin dashboard to manage unlimited SmartLinks with placement-based rotation
 
 ## UI/UX Enhancements (December 2025)
 - **Glassmorphism Design**: Modern glass-like effects with backdrop-blur throughout the UI
@@ -139,24 +139,30 @@ When ready, use Replit's publish feature to create a live URL.
   - Newsletter form in footer with success/error messages
   - API key managed via Replit Secrets
 
-### Adsterra SmartLink Ads Integration
-- **Location**: `components/AdBanner.tsx`
-- **Type**: SmartLink URL-based ads (not ad-unit IDs)
-- **Components**:
-  - `AdBanner` - Premium styled banner with gradient effects (160px mobile / 220px desktop)
-  - `StickyBottomBanner` - Mobile sticky bottom banner with close button (session persistence)
-  - `InArticleAd` - Subtle in-article ad placement
+### Dynamic Ads Manager System
+- **Location**: `context/AdsContext.tsx`, `pages/AdminAdsPage.tsx`, `components/AdBanner.tsx`
+- **Admin Panel**: `/admin/ads` (protected by admin authentication)
+- **Storage**: localStorage (no database required)
 - **Features**:
-  - SmartLink URL rotation every 6 seconds (up to 10 URLs)
-  - Click-only activation - no auto-popups or redirects
+  - Add unlimited SmartLinks without code modification
+  - Each ad configurable with: title, URL, optional image, placement, active/inactive status
+  - 10-second rotation when multiple ads share the same placement
+  - Full CRUD operations (Create, Read, Update, Delete)
+  - Toggle active/inactive status per ad
   - Premium glassmorphism design with gradient accents
   - Dark/Light theme compatible
   - Responsive design for all screen sizes
-  - CLS-free with proper height reservations
-  - No external scripts or iframes
   - Rotation pauses on hover for better UX
   - SEO-safe and Google-compliant
-- **Placements**:
+- **Available Placements**:
+  - `home_top`: After hero section on homepage
+  - `home_middle`: After pagination on homepage
+  - `home_after_card_3`: After 3rd article card on homepage/category pages
+  - `article_top`: After header on article pages
+  - `article_middle`: After content on article pages
+  - `article_bottom`: Before related posts on article pages
+  - `footer`: Above footer section
+- **Page Placements**:
   - **Hero Section**: After hero on homepage
   - **Footer Area**: Above footer on homepage
   - **Category Pages**: After 4 articles and at feed end
