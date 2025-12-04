@@ -139,50 +139,39 @@ When ready, use Replit's publish feature to create a live URL.
   - Newsletter form in footer with success/error messages
   - API key managed via Replit Secrets
 
-### A-ADS (Anonymous Ads) Integration
-- **Location**: `components/ads/` directory
-- **Ad Unit ID**: 2419015 (configured via `VITE_AADS_AD_UNIT_ID`)
-- **Mode**: No-verification mode using direct iframe embedding
+### Adsterra SmartLink Ads Integration
+- **Location**: `components/AdBanner.tsx`
+- **Type**: SmartLink URL-based ads (not ad-unit IDs)
 - **Components**:
-  - `AAdsProvider` - Global ad context provider
-  - `AAdsTopBanner` - Top banner (728x90 desktop / 320x50 mobile) for homepage and article pages
-  - `StickyAAdsBanner` - Sticky bottom banner with close button and 24h localStorage persistence
-  - `AAdsInArticle` - In-article ad (300x250) placement after 2nd paragraph
-  - `AAdsSidebar` - Sidebar ad (160x600) for desktop only (screen >= 1024px)
-  - `AAdsBanner` - Generic responsive banner component
-  - `AAdsFeed` - Feed-style ad for homepage article grid
-  - `AAdsBottom` - Bottom banner component
+  - `AdBanner` - Premium styled banner with gradient effects (160px mobile / 220px desktop)
+  - `StickyBottomBanner` - Mobile sticky bottom banner with close button (session persistence)
+  - `InArticleAd` - Subtle in-article ad placement
 - **Features**:
-  - 100% Google-safe - no adult content, popups, or redirects
-  - No approval/verification required - loads instantly
-  - Fully responsive design (auto-detects mobile/desktop)
-  - Dark/Light theme compatibility
-  - CLS-free (no layout shift) with skeleton loaders
-  - Lazy-loaded iframes for performance
-  - Close button on sticky banner with localStorage state
-  - No render-blocking scripts
-  - Works on Netlify, Vercel, Cloudflare, Replit
+  - SmartLink URL rotation every 6 seconds (up to 10 URLs)
+  - Click-only activation - no auto-popups or redirects
+  - Premium glassmorphism design with gradient accents
+  - Dark/Light theme compatible
+  - Responsive design for all screen sizes
+  - CLS-free with proper height reservations
+  - No external scripts or iframes
+  - Rotation pauses on hover for better UX
+  - SEO-safe and Google-compliant
 - **Placements**:
-  - **Top Banner**: Homepage and article pages (728x90 / 320x50)
-  - **Sticky Bottom**: All pages globally with close button (728x90 / 320x50)
-  - **In-Article**: After 2nd paragraph in article content (300x250)
-  - **Sidebar**: Desktop article pages only (160x600)
-- **Configuration**:
-  - `VITE_AADS_AD_UNIT_ID=2419015` - Set in environment variables
+  - **Hero Section**: After hero on homepage
+  - **Footer Area**: Above footer on homepage
+  - **Category Pages**: After 4 articles and at feed end
+  - **Article Pages**: After content and before related posts
+  - **Mobile Sticky**: Bottom banner on mobile devices
+- **Configuration** (Environment Variables):
+  - `VITE_ADSTERRA_SMARTLINK_1` through `VITE_ADSTERRA_SMARTLINK_10`
+  - Get SmartLinks from your Adsterra publisher dashboard
+  - Ads only display when at least one valid SmartLink is configured
 
-### Post-Monetization Optimization
-- **Location**: `lib/ads/`, `hooks/useAdObserver.ts`, `components/ConsentBanner.tsx`
-- **Analytics Dashboard**: `/admin/ads` - View impressions, clicks, CTR, revenue
-- **Features**:
-  - Viewability tracking (50% visible for 1+ second)
-  - Safe ad refresh (max once per 30s)
-  - GDPR/CCPA consent banner with preferences
-  - A/B testing for placements, sizes, sticky behavior
-  - Fallback content for slow/failed ads
-  - Event batching (10 events or 30s)
-  - Admin kill switch and debug mode
-- **Smoke Test**: `node scripts/check-ads.js`
-- **Full Documentation**: See `docs/ADS_OPTIMIZATION.md`
+### Privacy & Consent
+- **Location**: `components/ConsentBanner.tsx`
+- GDPR/CCPA compliant consent banner
+- User preference storage in localStorage
+- Advertising consent toggle for transparency
 
 ## Troubleshooting
 
@@ -205,9 +194,10 @@ If you see "Blocked request. This host is not allowed":
 - Check backend logs for Pixabay API errors
 
 ### Ads Not Showing
-- Make sure `VITE_AADS_AD_UNIT_ID` is set in environment variables
-- Get your ad unit ID from a-ads.com
-- Ads are lazy-loaded, so scroll to see them appear
+- Set at least one `VITE_ADSTERRA_SMARTLINK_X` environment variable (X = 1-10)
+- Get SmartLink URLs from your Adsterra publisher dashboard
+- Ads only render when valid SmartLink URLs are configured
+- Scroll down on pages to see banner placements
 
 ### Hot Module Replacement (HMR) Issues
 - HMR is configured for Replit's HTTPS proxy
