@@ -8,6 +8,7 @@ import SEO from '../components/SEO';
 import { buildCategoryBreadcrumb } from '../utils/seoEngine';
 import { generateCollectionPageSchema } from '../utils/seoHelpers';
 import { getPageSEO, buildCategoryUrl } from '../utils/seoConfig';
+import AdBanner from '../components/AdBanner';
 
 const ARTICLES_PER_PAGE = 6;
 
@@ -61,10 +62,21 @@ const CategoryPage: React.FC = () => {
       ) : filteredArticles.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {currentArticles.map((article) => (
-              <ArticleCard key={article.slug} article={article} />
+            {currentArticles.map((article, index) => (
+              <React.Fragment key={article.slug}>
+                <ArticleCard article={article} />
+                {index === 3 && currentArticles.length > 4 && (
+                  <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                    <AdBanner placement="section" />
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
+          
+          {/* Ad Banner - End of Category Feed */}
+          <AdBanner placement="footer" className="mt-8" />
+          
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

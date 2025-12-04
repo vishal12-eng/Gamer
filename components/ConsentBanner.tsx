@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { trackConsentChange } from '../lib/ads/analytics';
 
 export interface ConsentPreferences {
   necessary: boolean;
@@ -103,7 +102,6 @@ const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange }) => {
     setPreferences(newPreferences);
     setIsVisible(false);
     onConsentChange?.(newPreferences);
-    trackConsentChange(true, newPreferences);
   }, [onConsentChange]);
 
   const handleRejectAll = useCallback(() => {
@@ -123,7 +121,6 @@ const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange }) => {
     setPreferences(newPreferences);
     setIsVisible(false);
     onConsentChange?.(newPreferences);
-    trackConsentChange(false, newPreferences);
   }, [onConsentChange]);
 
   const handleSavePreferences = useCallback(() => {
@@ -137,7 +134,6 @@ const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange }) => {
     setIsVisible(false);
     setShowPreferences(false);
     onConsentChange?.(preferences);
-    trackConsentChange(preferences.advertising, preferences);
   }, [preferences, onConsentChange]);
 
   const togglePreference = (key: keyof ConsentPreferences) => {
@@ -180,8 +176,8 @@ const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange }) => {
                   isDarkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                   We use cookies to enhance your browsing experience and analyze our traffic. 
-                  Our ads are provided by A-ADS, a privacy-respecting ad network that doesn't use 
-                  tracking cookies. You can choose your preferences below.
+                  Our ads are privacy-respecting and don't use tracking cookies. 
+                  You can choose your preferences below.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -287,7 +283,7 @@ const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange }) => {
                     <p className={`text-sm ${
                       isDarkMode ? 'text-gray-400' : 'text-gray-500'
                     }`}>
-                      Privacy-friendly ads via A-ADS (no tracking cookies used)
+                      Privacy-friendly ads (no tracking cookies used)
                     </p>
                   </div>
                   <button

@@ -12,6 +12,7 @@ import { getCategoryIcon } from '../utils/getCategoryIcon';
 import SEO from '../components/SEO';
 import { generateOrganizationSchema, generateWebsiteSchema } from '../utils/seoHelpers';
 import { getPageSEO } from '../utils/seoConfig';
+import AdBanner, { StickyBottomBanner } from '../components/AdBanner';
 
 const ARTICLES_PER_PAGE = 6;
 
@@ -201,6 +202,9 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Ad Banner - After Hero */}
+      <AdBanner placement="hero" />
+
       {/* Trending Ticker */}
       <TrendingTicker articles={articles} />
 
@@ -242,7 +246,13 @@ const HomePage: React.FC = () => {
             onPageChange={handlePageChange}
           />
         </div>
+
+        {/* Ad Banner - Above Footer */}
+        <AdBanner placement="footer" className="mt-12" />
       </section>
+
+      {/* Mobile Sticky Bottom Banner */}
+      <StickyBottomBanner />
     </div>
   );
 };
