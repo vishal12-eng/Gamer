@@ -203,7 +203,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Ad Banner - After Hero */}
-      <AdBanner placement="hero" />
+      <AdBanner placement="home_top" />
 
       {/* Trending Ticker */}
       <TrendingTicker articles={articles} />
@@ -232,7 +232,14 @@ const HomePage: React.FC = () => {
           }`}
         >
           {currentArticles.map((article, index) => (
-            <ArticleCard key={article.slug} article={article} index={index} />
+            <React.Fragment key={article.slug}>
+              <ArticleCard article={article} index={index} />
+              {index === 2 && currentArticles.length > 3 && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <AdBanner placement="home_after_card_3" />
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
 
@@ -249,6 +256,9 @@ const HomePage: React.FC = () => {
 
         {/* Ad Banner - Above Footer */}
         <AdBanner placement="footer" className="mt-12" />
+        
+        {/* Ad Banner - Home Middle */}
+        <AdBanner placement="home_middle" className="mt-8" />
       </section>
 
       {/* Mobile Sticky Bottom Banner */}

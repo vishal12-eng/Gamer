@@ -67,7 +67,7 @@ const CategoryPage: React.FC = () => {
                 <ArticleCard article={article} />
                 {index === 3 && currentArticles.length > 4 && (
                   <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                    <AdBanner placement="section" />
+                    <AdBanner placement="home_after_card_3" />
                   </div>
                 )}
               </React.Fragment>

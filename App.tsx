@@ -10,6 +10,7 @@ import Toast from './components/Toast';
 import { ArticleProvider } from './hooks/useArticles';
 import { HomePageSkeleton } from './components/SkeletonLoader';
 import { AuthProvider } from './context/AuthContext';
+import { AdsProvider } from './context/AdsContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ConsentBanner from './components/ConsentBanner';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -33,6 +34,7 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminArticleListPage = lazy(() => import('./pages/AdminArticleListPage'));
 const AdminArticleEditorPage = lazy(() => import('./pages/AdminArticleEditorPage'));
+const AdminAdsPage = lazy(() => import('./pages/AdminAdsPage'));
 
 function App() {
   const [toastMessage, setToastMessage] = useState('');
@@ -48,9 +50,10 @@ function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <ToastContext.Provider value={{ showToast }}>
-          <ArticleProvider>
-            <HashRouter>
+        <AdsProvider>
+          <ToastContext.Provider value={{ showToast }}>
+            <ArticleProvider>
+              <HashRouter>
               <ScrollToTop>
                 <div className="flex flex-col min-h-screen font-sans bg-gray-100 dark:bg-transparent transition-colors duration-500">
                   <Header />
@@ -104,6 +107,14 @@ function App() {
                               </ProtectedRoute>
                             } 
                           />
+                          <Route 
+                            path="/admin/ads" 
+                            element={
+                              <ProtectedRoute>
+                                <AdminAdsPage />
+                              </ProtectedRoute>
+                            } 
+                          />
                           <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                       </Suspense>
@@ -115,9 +126,10 @@ function App() {
                   <Toast message={toastMessage} onClose={closeToast} />
                 </div>
               </ScrollToTop>
-            </HashRouter>
-          </ArticleProvider>
-        </ToastContext.Provider>
+              </HashRouter>
+            </ArticleProvider>
+          </ToastContext.Provider>
+        </AdsProvider>
       </AuthProvider>
     </HelmetProvider>
   );

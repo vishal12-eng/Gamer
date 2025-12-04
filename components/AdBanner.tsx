@@ -1,77 +1,118 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useAds, AdPlacement } from '../context/AdsContext';
 
-const SMARTLINK_URLS = [
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_1 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder1',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_2 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder2',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_3 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder3',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_4 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder4',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_5 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder5',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_6 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder6',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_7 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder7',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_8 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder8',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_9 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder9',
-  import.meta.env.VITE_ADSTERRA_SMARTLINK_10 || 'https://www.highperformanceformat.com/m7gp5niaq?key=placeholder10',
-].filter(url => url && !url.includes('placeholder'));
-
-const ROTATION_INTERVAL = 6000;
+const ROTATION_INTERVAL = 10000;
 
 interface AdBannerProps {
-  placement?: 'hero' | 'section' | 'article' | 'footer';
+  placement: AdPlacement;
   className?: string;
 }
 
-const AdBanner: React.FC<AdBannerProps> = ({ placement = 'section', className = '' }) => {
-  const [currentIndex, setCurrentIndex] = useState(() => 
-    Math.floor(Math.random() * Math.max(SMARTLINK_URLS.length, 1))
-  );
+const AdBanner: React.FC<AdBannerProps> = ({ placement, className = '' }) => {
+  const { getActiveAdsByPlacement } = useAds();
+  const ads = getActiveAdsByPlacement(placement);
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const rotateLink = useCallback(() => {
-    if (SMARTLINK_URLS.length > 1) {
-      setCurrentIndex((prev) => (prev + 1) % SMARTLINK_URLS.length);
+  const rotateAd = useCallback(() => {
+    if (ads.length > 1) {
+      setCurrentIndex((prev) => (prev + 1) % ads.length);
     }
-  }, []);
+  }, [ads.length]);
 
   useEffect(() => {
-    if (SMARTLINK_URLS.length > 1 && !isHovered) {
-      intervalRef.current = setInterval(rotateLink, ROTATION_INTERVAL);
+    setCurrentIndex(0);
+  }, [ads.length]);
+
+  useEffect(() => {
+    if (ads.length > 1 && !isHovered) {
+      intervalRef.current = setInterval(rotateAd, ROTATION_INTERVAL);
     }
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [rotateLink, isHovered]);
+  }, [rotateAd, isHovered, ads.length]);
+
+  const currentAd = ads[currentIndex];
 
   const handleClick = () => {
-    const url = SMARTLINK_URLS[currentIndex];
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    if (currentAd?.smartlinkUrl) {
+      window.open(currentAd.smartlinkUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
-  if (SMARTLINK_URLS.length === 0) {
+  if (ads.length === 0) {
     return null;
   }
 
   const isDarkMode = typeof document !== 'undefined' && 
     document.documentElement.classList.contains('dark');
 
+  const isCompact = placement === 'home_after_card_3' || placement === 'article_middle';
+
+  if (currentAd.imageUrl) {
+    return (
+      <div 
+        className={`relative w-full overflow-hidden rounded-xl cursor-pointer 
+          transition-all duration-300 ease-out my-6
+          ${className}`}
+        onClick={handleClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        role="button"
+        aria-label={currentAd.title || 'Sponsored content'}
+      >
+        <div className={`relative w-full ${isCompact ? 'h-[120px] md:h-[160px]' : 'h-[160px] md:h-[220px]'} overflow-hidden rounded-xl
+          shadow-lg hover:shadow-2xl transform hover:scale-[1.01] transition-all duration-300`}
+        >
+          <img 
+            src={currentAd.imageUrl} 
+            alt={currentAd.title || 'Advertisement'}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+          <div className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded
+            ${isDarkMode ? 'bg-black/50 text-gray-400' : 'bg-white/80 text-gray-500'}`}>
+            Ad
+          </div>
+        </div>
+        
+        {ads.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {ads.map((_, idx) => (
+              <div 
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-white w-3' : 'bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div 
       className={`relative w-full overflow-hidden rounded-xl cursor-pointer 
-        transition-all duration-300 ease-out
-        ${placement === 'hero' ? 'my-6' : 'my-8'}
+        transition-all duration-300 ease-out my-6
         ${className}`}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       role="button"
-      aria-label="Sponsored content"
+      aria-label={currentAd.title || 'Sponsored content'}
     >
       <div 
-        className={`relative w-full h-[160px] md:h-[220px] overflow-hidden rounded-xl
+        className={`relative w-full ${isCompact ? 'h-[120px] md:h-[160px]' : 'h-[160px] md:h-[220px]'} overflow-hidden rounded-xl
           ${isDarkMode 
             ? 'bg-gradient-to-br from-gray-800/90 via-gray-900/95 to-black border border-white/10' 
             : 'bg-gradient-to-br from-gray-100 via-white to-gray-50 border border-gray-200'
@@ -88,8 +129,8 @@ const AdBanner: React.FC<AdBannerProps> = ({ placement = 'section', className = 
             ${isDarkMode ? 'bg-purple-500/20' : 'bg-purple-400/30'}`} />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center justify-center h-full p-6 text-center">
-          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-3
+        <div className="relative z-10 flex flex-col items-center justify-center h-full p-4 md:p-6 text-center">
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-2 md:mb-3
             ${isDarkMode 
               ? 'bg-white/10 text-gray-300 border border-white/10' 
               : 'bg-gray-900/10 text-gray-600 border border-gray-200'
@@ -100,27 +141,27 @@ const AdBanner: React.FC<AdBannerProps> = ({ placement = 'section', className = 
             <span>Sponsored</span>
           </div>
           
-          <h3 className={`text-lg md:text-2xl font-bold mb-2 leading-tight
+          <h3 className={`text-base md:text-xl lg:text-2xl font-bold mb-1 md:mb-2 leading-tight
             ${isDarkMode 
               ? 'bg-gradient-to-r from-white via-cyan-200 to-purple-200 bg-clip-text text-transparent' 
               : 'bg-gradient-to-r from-gray-900 via-cyan-700 to-purple-700 bg-clip-text text-transparent'
             }`}>
-            Discover Amazing Offers
+            {currentAd.title || 'Discover Amazing Offers'}
           </h3>
           
-          <p className={`text-sm md:text-base mb-4 max-w-md
+          <p className={`text-xs md:text-sm mb-2 md:mb-4 max-w-md
             ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Click to explore exclusive deals and premium content
           </p>
           
-          <div className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm
+          <div className={`inline-flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-full font-semibold text-xs md:text-sm
             bg-gradient-to-r from-cyan-500 to-purple-600 text-white
             hover:from-cyan-400 hover:to-purple-500
             transform hover:scale-105 transition-all duration-300
             shadow-lg hover:shadow-cyan-500/25`}>
             <span>Learn More</span>
             <svg 
-              className={`w-4 h-4 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} 
+              className={`w-3 h-3 md:w-4 md:h-4 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} 
               fill="none" 
               viewBox="0 0 24 24" 
               stroke="currentColor"
@@ -130,21 +171,35 @@ const AdBanner: React.FC<AdBannerProps> = ({ placement = 'section', className = 
           </div>
         </div>
 
-        <div className={`absolute top-3 right-3 text-xs px-2 py-0.5 rounded
+        <div className={`absolute top-2 right-2 text-xs px-2 py-0.5 rounded
           ${isDarkMode ? 'bg-black/50 text-gray-500' : 'bg-white/80 text-gray-400'}`}>
           Ad
         </div>
+        
+        {ads.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {ads.map((_, idx) => (
+              <div 
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-cyan-400 w-3' : 'bg-gray-500/50'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export const StickyBottomBanner: React.FC = () => {
+  const { getActiveAdsByPlacement } = useAds();
+  const ads = getActiveAdsByPlacement('footer');
+  
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(() => 
-    Math.floor(Math.random() * Math.max(SMARTLINK_URLS.length, 1))
-  );
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const dismissed = sessionStorage.getItem('sticky_banner_dismissed');
@@ -152,19 +207,18 @@ export const StickyBottomBanner: React.FC = () => {
       setIsDismissed(true);
       return;
     }
-
     const timer = setTimeout(() => setIsVisible(true), 3000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (SMARTLINK_URLS.length > 1 && isVisible && !isDismissed) {
+    if (ads.length > 1 && isVisible && !isDismissed) {
       const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % SMARTLINK_URLS.length);
+        setCurrentIndex((prev) => (prev + 1) % ads.length);
       }, ROTATION_INTERVAL);
       return () => clearInterval(interval);
     }
-  }, [isVisible, isDismissed]);
+  }, [ads.length, isVisible, isDismissed]);
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -174,16 +228,17 @@ export const StickyBottomBanner: React.FC = () => {
   };
 
   const handleClick = () => {
-    const url = SMARTLINK_URLS[currentIndex];
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    const currentAd = ads[currentIndex];
+    if (currentAd?.smartlinkUrl) {
+      window.open(currentAd.smartlinkUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
-  if (isDismissed || !isVisible || SMARTLINK_URLS.length === 0) {
+  if (isDismissed || !isVisible || ads.length === 0) {
     return null;
   }
 
+  const currentAd = ads[currentIndex];
   const isDarkMode = typeof document !== 'undefined' && 
     document.documentElement.classList.contains('dark');
 
@@ -207,8 +262,7 @@ export const StickyBottomBanner: React.FC = () => {
         
         <div className="relative flex items-center justify-between p-3">
           <div className="flex items-center gap-3 flex-1">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center
-              bg-gradient-to-br from-cyan-500 to-purple-600`}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-cyan-500 to-purple-600">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -216,7 +270,7 @@ export const StickyBottomBanner: React.FC = () => {
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold truncate
                 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Special Offer
+                {currentAd.title || 'Special Offer'}
               </p>
               <p className={`text-xs truncate
                 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -226,8 +280,7 @@ export const StickyBottomBanner: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            <span className={`px-3 py-1.5 rounded-full text-xs font-semibold
-              bg-gradient-to-r from-cyan-500 to-purple-600 text-white`}>
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-cyan-500 to-purple-600 text-white">
               View
             </span>
             <button
@@ -255,28 +308,32 @@ export const StickyBottomBanner: React.FC = () => {
   );
 };
 
-export const InArticleAd: React.FC<{ className?: string }> = ({ className = '' }) => {
-  const [currentIndex, setCurrentIndex] = useState(() => 
-    Math.floor(Math.random() * Math.max(SMARTLINK_URLS.length, 1))
-  );
+export const InArticleAd: React.FC<{ placement?: AdPlacement; className?: string }> = ({ 
+  placement = 'article_middle', 
+  className = '' 
+}) => {
+  const { getActiveAdsByPlacement } = useAds();
+  const ads = getActiveAdsByPlacement(placement);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    if (SMARTLINK_URLS.length > 1) {
+    if (ads.length > 1) {
       const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % SMARTLINK_URLS.length);
+        setCurrentIndex((prev) => (prev + 1) % ads.length);
       }, ROTATION_INTERVAL);
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [ads.length]);
+
+  const currentAd = ads[currentIndex];
 
   const handleClick = () => {
-    const url = SMARTLINK_URLS[currentIndex];
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    if (currentAd?.smartlinkUrl) {
+      window.open(currentAd.smartlinkUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
-  if (SMARTLINK_URLS.length === 0) {
+  if (ads.length === 0) {
     return null;
   }
 
@@ -285,7 +342,7 @@ export const InArticleAd: React.FC<{ className?: string }> = ({ className = '' }
 
   return (
     <div 
-      className={`relative my-8 p-4 rounded-lg cursor-pointer
+      className={`relative my-6 p-4 rounded-lg cursor-pointer
         transition-all duration-300 hover:scale-[1.01]
         ${isDarkMode 
           ? 'bg-gradient-to-r from-gray-800/50 via-gray-900/50 to-gray-800/50 border border-white/5' 
@@ -304,7 +361,7 @@ export const InArticleAd: React.FC<{ className?: string }> = ({ className = '' }
           </div>
           <div>
             <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-              Recommended for You
+              {currentAd.title || 'Recommended for You'}
             </p>
             <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
               Sponsored Content

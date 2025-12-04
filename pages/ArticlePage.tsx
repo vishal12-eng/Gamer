@@ -38,7 +38,7 @@ import { slugify } from '../utils/slugify';
 import { getCategoryIcon } from '../utils/getCategoryIcon';
 import Feedback from '../components/Feedback';
 import SEO from '../components/SEO';
-import { InArticleAd } from '../components/AdBanner';
+import AdBanner from '../components/AdBanner';
 
 // Web Speech API is used for TTS - no external dependencies needed
 
@@ -692,6 +692,8 @@ const ArticlePage: React.FC = () => {
           </div>
         </header>
 
+        {/* Article Top Ad */}
+        <AdBanner placement="article_top" className="my-6" />
 
         <div className="my-6 border-y border-gray-200 dark:border-gray-700 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center flex-wrap gap-2">
@@ -946,7 +948,7 @@ const ArticlePage: React.FC = () => {
         )}
 
         {/* In-Article Ad - After Content */}
-        <InArticleAd className="mt-8" />
+        <AdBanner placement="article_middle" className="mt-8" />
 
 
         {/* --- MOBILE/TABLET AI TOOLBAR --- */}
@@ -992,7 +994,7 @@ const ArticlePage: React.FC = () => {
         </div>
          
         {/* In-Article Ad - Before Related Posts */}
-        <InArticleAd className="mt-8" />
+        <AdBanner placement="article_bottom" className="mt-8" />
 
         {relatedArticles.length > 0 && (
           <section className="mt-16 border-t border-gray-200 dark:border-gray-700 pt-8">
