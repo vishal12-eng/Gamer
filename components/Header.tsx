@@ -122,7 +122,7 @@ const Header: React.FC = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
+      className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ease-out ${
         isScrolled || isMenuOpen
           ? 'glass shadow-glass-lg'
           : 'bg-transparent'
@@ -218,7 +218,7 @@ const Header: React.FC = () => {
             {/* Theme toggle with glow effect */}
             <div className="relative group">
               <ThemeToggle />
-              <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+              <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 pointer-events-none"></div>
             </div>
             
             {/* Admin dropdown with enhanced styling */}
