@@ -1,23 +1,41 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useLayoutEffect, ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
+  isHydrated: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getInitialTheme(): Theme {
+  if (typeof document !== 'undefined') {
+    return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  }
+  return 'dark';
+}
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const storedTheme = localStorage.getItem('theme') as Theme | null;
-      if (storedTheme) return storedTheme;
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useLayoutEffect(() => {
+    const storedTheme = localStorage.getItem('theme') as Theme | null;
+    let initialTheme: Theme;
+    
+    if (storedTheme) {
+      initialTheme = storedTheme;
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      initialTheme = 'light';
+    } else {
+      initialTheme = 'dark';
     }
-    return 'dark';
-  });
+    
+    setTheme(initialTheme);
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -30,15 +48,17 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       root.classList.remove('dark');
     }
     
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    if (isHydrated) {
+      localStorage.setItem('theme', theme);
+    }
+  }, [theme, isHydrated]);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isHydrated }}>
       {children}
     </ThemeContext.Provider>
   );

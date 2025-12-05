@@ -20,14 +20,13 @@ const HomePage: React.FC = () => {
   const { articles, loading, error } = useArticles();
   const [currentPage, setCurrentPage] = useState(1);
   const [heroImageLoaded, setHeroImageLoaded] = useState(false);
-  const [isHeroVisible, setIsHeroVisible] = useState(false);
+  const [isHeroVisible, setIsHeroVisible] = useState(true);
   const heroRef = useRef<HTMLElement>(null);
   const articlesRef = useRef<HTMLElement>(null);
-  const [articlesVisible, setArticlesVisible] = useState(false);
+  const [articlesVisible, setArticlesVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsHeroVisible(true), 100);
-    return () => clearTimeout(timer);
+    setIsHeroVisible(true);
   }, []);
 
   useEffect(() => {
@@ -244,9 +243,7 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Pagination */}
-        <div className={`mt-12 transition-all duration-700 delay-300 ${
-          articlesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}>
+        <div className="mt-12">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
