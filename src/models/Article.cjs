@@ -123,6 +123,7 @@ const articleSchema = new mongoose.Schema({
 articleSchema.index({ title: 'text', summary: 'text', content: 'text' });
 articleSchema.index({ category: 1, publishedAt: -1 });
 articleSchema.index({ status: 1, publishedAt: -1 });
+articleSchema.index({ createdAt: 1 }); // Index for efficient cleanup queries
 
 articleSchema.methods.toJSON = function() {
   const obj = this.toObject();

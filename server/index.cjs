@@ -97,6 +97,9 @@ const requireAdmin = (req, res, next) => {
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('[Server] Shutting down...');
+  if (typeof stopCleanupScheduler === 'function') {
+    stopCleanupScheduler();
+  }
   if (dbConnection) {
     dbConnection.close();
   }
@@ -105,6 +108,9 @@ process.on('SIGINT', () => {
 
 process.on('SIGTERM', () => {
   console.log('[Server] Shutting down...');
+  if (typeof stopCleanupScheduler === 'function') {
+    stopCleanupScheduler();
+  }
   if (dbConnection) {
     dbConnection.close();
   }
@@ -1126,6 +1132,141 @@ app.get('/api/db/status', (req, res) => {
 });
 
 // =============================================
+// ARTICLE AUTO-CLEANUP SYSTEM
+// =============================================
+// 48 hours in milliseconds
+const ARTICLE_EXPIRY_MS = 48 * 60 * 60 * 1000;
+
+/**
+ * Cleanup function to delete articles older than 48 hours
+ * Only affects the Articles collection - does NOT touch:
+ * - Categories
+ * - Ads
+ * - Users/Admin
+ * - AI config
+ * - SEO metadata
+ * - Sitemap cache
+ * - Logs
+ */
+async function cleanupOldArticles() {
+  try {
+    if (!isMongoConnected() || !Article) {
+      console.log('[Article Cleanup] MongoDB not connected - skipping cleanup');
+      return { success: false, message: 'Database not connected', deletedCount: 0 };
+    }
+
+    const cutoffDate = new Date(Date.now() - ARTICLE_EXPIRY_MS);
+    
+    console.log(`[Article Cleanup] Running cleanup for articles older than: ${cutoffDate.toISOString()}`);
+    
+    // Delete only articles where createdAt is older than 48 hours
+    const result = await Article.deleteMany({ 
+      createdAt: { $lt: cutoffDate } 
+    });
+
+    const deletedCount = result.deletedCount || 0;
+    
+    if (deletedCount > 0) {
+      console.log(`[Article Cleanup] Successfully deleted ${deletedCount} old articles`);
+    } else {
+      console.log('[Article Cleanup] No articles older than 48 hours found');
+    }
+
+    return { 
+      success: true, 
+      message: `Cleanup completed successfully`,
+      deletedCount,
+      cutoffDate: cutoffDate.toISOString()
+    };
+  } catch (error) {
+    console.error('[Article Cleanup] Error during cleanup:', error.message);
+    return { 
+      success: false, 
+      message: 'Cleanup failed', 
+      error: error.message,
+      deletedCount: 0 
+    };
+  }
+}
+
+// Cron cleanup endpoint - can be called by external schedulers (Hostinger, Netlify, etc.)
+app.get('/api/cron/cleanup', async (req, res) => {
+  try {
+    console.log('[Article Cleanup] Cron endpoint triggered');
+    
+    const result = await cleanupOldArticles();
+    
+    // Return simple success response without exposing sensitive details
+    res.json({
+      success: result.success,
+      message: result.success ? 'Cleanup completed' : 'Cleanup skipped',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Article Cleanup] Cron endpoint error:', error.message);
+    // Return success even on error to prevent external schedulers from retrying
+    res.json({ 
+      success: false, 
+      message: 'Cleanup encountered an issue',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// POST endpoint for manual cleanup (admin only)
+app.post('/api/cron/cleanup', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    console.log('[Article Cleanup] Manual cleanup triggered by admin');
+    
+    const result = await cleanupOldArticles();
+    
+    res.json({
+      success: result.success,
+      message: result.message,
+      deletedCount: result.deletedCount,
+      cutoffDate: result.cutoffDate,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Article Cleanup] Manual cleanup error:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Cleanup failed',
+      error: error.message 
+    });
+  }
+});
+
+// Automatic cleanup scheduler - runs every 24 hours
+let cleanupInterval = null;
+const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function startCleanupScheduler() {
+  // Run initial cleanup after 1 minute of server start (give time for DB connection)
+  setTimeout(async () => {
+    console.log('[Article Cleanup] Running initial cleanup check...');
+    await cleanupOldArticles();
+  }, 60 * 1000);
+
+  // Schedule recurring cleanup every 24 hours
+  cleanupInterval = setInterval(async () => {
+    console.log('[Article Cleanup] Scheduled cleanup running...');
+    await cleanupOldArticles();
+  }, CLEANUP_INTERVAL_MS);
+
+  console.log('[Article Cleanup] Scheduler started - will run every 24 hours');
+}
+
+// Stop cleanup scheduler on shutdown
+function stopCleanupScheduler() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+    console.log('[Article Cleanup] Scheduler stopped');
+  }
+}
+
+// =============================================
 // SERVER STARTUP
 // =============================================
 async function startServer() {
@@ -1139,6 +1280,9 @@ async function startServer() {
     console.log(`[Backend Server] Mailchimp Key available: ${!!process.env.MAILCHIMP_API_KEY}`);
     console.log(`[Backend Server] MongoDB connected: ${isMongoConnected()}`);
     console.log(`[Backend Server] Expanded articles cached: ${Object.keys(expandedArticlesCache).length}`);
+    
+    // Start the article cleanup scheduler
+    startCleanupScheduler();
   });
 }
 
