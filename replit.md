@@ -98,7 +98,11 @@ MAILCHIMP_LIST_ID     - Mailchimp audience list ID
 - **Deployment**: Hostinger/Netlify compatible (static build with API proxy)
 
 ## Recent Changes
-- **December 2025**: Added Article Auto-Cleanup System (48-hour expiry, 24-hour scheduler)
+- **December 5, 2025**: Fixed LSP errors in AdminAdsPage.tsx (type conversion for sorting) and geminiService.ts (unused parameters)
+- **December 5, 2025**: Removed duplicate files (ThemeToggle, TagIcon, TechnologyIcon, TranslateIcon) - kept only properly organized ones
+- **December 5, 2025**: Security fix - removed exposed malformed MONGODB_URI, moved to secrets
+- **December 5, 2025**: Created .env.example template with URL-encoding guidance
+- **December 5, 2025**: Verified Article Auto-Cleanup System (48-hour expiry, 24-hour scheduler) is production-ready
 - **December 2025**: Added MongoDB Atlas integration with Mongoose models
 - **December 2025**: Updated AdsContext and useArticles hooks for MongoDB support
 - **December 2025**: Added authentication API with JWT tokens
