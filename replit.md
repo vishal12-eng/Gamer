@@ -98,10 +98,43 @@ MAILCHIMP_LIST_ID     - Mailchimp audience list ID
 - **Deployment**: Hostinger/Netlify compatible (static build with API proxy)
 
 ## Recent Changes
+- **December 2025**: Added Article Auto-Cleanup System (48-hour expiry, 24-hour scheduler)
 - **December 2025**: Added MongoDB Atlas integration with Mongoose models
 - **December 2025**: Updated AdsContext and useArticles hooks for MongoDB support
 - **December 2025**: Added authentication API with JWT tokens
 - **December 2025**: Created comprehensive REST API for articles, categories, ads
+
+## Article Auto-Cleanup System
+
+### Overview
+The system automatically deletes articles older than 48 hours to keep the database lightweight and prevent free-tier overflow issues.
+
+### How It Works
+- **Expiry Time**: 48 hours (48 * 60 * 60 * 1000 ms)
+- **Scheduler**: Runs every 24 hours automatically
+- **Delete Query**: `deleteMany({ createdAt: { $lt: new Date(Date.now() - 48*60*60*1000) } })`
+- **Protected Collections**: Only Articles are deleted. Categories, Ads, Users, AI config, SEO metadata, sitemap cache, and logs are NOT touched.
+
+### API Endpoints
+- `GET /api/cron/cleanup` - Public endpoint for external schedulers (Hostinger, Netlify)
+- `POST /api/cron/cleanup` - Admin-only endpoint with detailed response
+
+### Hostinger Cron Job Setup
+1. Go to Hostinger hPanel > Cron Jobs
+2. Add new cron job:
+   - Command: `curl -s https://yourdomain.com/api/cron/cleanup`
+   - Schedule: Every 24 hours (0 0 * * *)
+
+### Netlify Scheduled Function Setup
+Create `netlify/functions/cleanup-scheduler.js`:
+```javascript
+const { schedule } = require('@netlify/functions');
+
+module.exports.handler = schedule('0 0 * * *', async () => {
+  await fetch('https://yourdomain.com/api/cron/cleanup');
+  return { statusCode: 200 };
+});
+```
 
 ## Project Structure
 ```
