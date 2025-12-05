@@ -10,23 +10,110 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+// MongoDB Connection (optional - gracefully handle if not configured)
+let dbConnection = null;
+let Article, Category, Ad, User;
+let jwt, bcrypt;
+
+async function initializeMongoDB() {
+  try {
+    const MONGODB_URI = process.env.MONGODB_URI;
+    if (!MONGODB_URI) {
+      console.log('[MongoDB] MONGODB_URI not set - using file-based storage');
+      return false;
+    }
+
+    const mongoose = require('mongoose');
+    
+    await mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+
+    dbConnection = mongoose.connection;
+    console.log('[MongoDB] Connected successfully');
+
+    // Load models
+    Article = require('../src/models/Article.cjs');
+    Category = require('../src/models/Category.cjs');
+    Ad = require('../src/models/Ad.cjs');
+    User = require('../src/models/User.cjs');
+
+    // Load JWT and bcrypt
+    jwt = require('jsonwebtoken');
+    bcrypt = require('bcryptjs');
+
+    return true;
+  } catch (error) {
+    console.warn('[MongoDB] Connection failed:', error.message);
+    console.log('[MongoDB] Falling back to file-based storage');
+    return false;
+  }
+}
+
+const isMongoConnected = () => dbConnection && dbConnection.readyState === 1;
+
+// JWT Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required' });
+  }
+
+  const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+  
+  try {
+    if (jwt) {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.user = decoded;
+      next();
+    } else {
+      // Fallback: simple token check if JWT not available
+      if (token === 'admin-token') {
+        req.user = { role: 'admin' };
+        next();
+      } else {
+        return res.status(403).json({ error: 'Invalid token' });
+      }
+    }
+  } catch (error) {
+    return res.status(403).json({ error: 'Invalid or expired token' });
+  }
+};
+
+// Admin-only middleware
+const requireAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'editor')) {
+    next();
+  } else {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+};
+
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('[Server] Shutting down...');
+  if (dbConnection) {
+    dbConnection.close();
+  }
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
   console.log('[Server] Shutting down...');
+  if (dbConnection) {
+    dbConnection.close();
+  }
   process.exit(0);
 });
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
+// =============================================
+// AI HANDLER (Existing - Unchanged)
+// =============================================
 app.post('/api/aiHandler', async (req, res) => {
   try {
     const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
@@ -121,16 +208,16 @@ app.post('/api/aiHandler', async (req, res) => {
   }
 });
 
-// Cache for Pixabay images to reduce API calls
+// =============================================
+// PIXABAY HANDLER (Existing - Unchanged)
+// =============================================
 const pixabayCache = {};
 let usedImageUrls = new Set();
 
-// Add delay between requests to respect rate limits
 const delayBetweenRequests = async () => {
   return new Promise(resolve => setTimeout(resolve, 100));
 };
 
-// Clear cache every 15 minutes to allow fresh searches
 setInterval(() => {
   console.log('[Pixabay Handler] Clearing cache to allow fresh searches');
   Object.keys(pixabayCache).forEach(key => delete pixabayCache[key]);
@@ -144,7 +231,6 @@ app.post('/api/pixabayImage', async (req, res) => {
     const apiKey = process.env.PIXABAY_API_KEY;
     const { searchQuery, category } = req.body;
 
-    // Check cache first
     const cacheKey = `${searchQuery}_${category}`;
     if (pixabayCache[cacheKey]) {
       console.log(`[Pixabay Handler] Cache hit for: "${searchQuery}"`);
@@ -186,7 +272,6 @@ app.post('/api/pixabayImage', async (req, res) => {
       }
     };
 
-    // Category to generic search term mapping with broader fallbacks
     const categorySearchMap = {
       'Technology': ['technology', 'innovation', 'computer', 'digital'],
       'AI': ['artificial intelligence', 'robot', 'automation', 'technology'],
@@ -203,21 +288,15 @@ app.post('/api/pixabayImage', async (req, res) => {
     const keywords = extractKeywords(searchQuery);
     console.log(`[Pixabay Handler] Extracted keywords: ${keywords.join(', ')}`);
 
-    // Build search queries with priority - expanded for better coverage
     const categoryQueries = Array.isArray(categorySearchMap[category]) 
       ? categorySearchMap[category] 
       : [categorySearchMap['All']];
     
     const queries = [
-      // Primary: Category + keywords combined
       ...categoryQueries.map(cat => `${cat} ${keywords[0] || ''}`).filter(q => q.trim()),
-      // Secondary: Category alone
       ...categoryQueries,
-      // Tertiary: Individual keywords
       ...keywords,
-      // Fallback: Combined keywords
       keywords.length > 1 ? keywords.slice(0, 2).join(' ') : '',
-      // Final fallback: Generic
       'photo',
       'image',
       'news'
@@ -289,6 +368,9 @@ app.post('/api/pixabayImage', async (req, res) => {
   }
 });
 
+// =============================================
+// MAILCHIMP HANDLER (Existing - Unchanged)
+// =============================================
 app.post('/api/mailchimpSubscribe', async (req, res) => {
   try {
     const { email } = req.body;
@@ -338,7 +420,9 @@ app.post('/api/mailchimpSubscribe', async (req, res) => {
   }
 });
 
-// === EXPANDED ARTICLES STORAGE ===
+// =============================================
+// EXPANDED ARTICLES (File-based fallback + MongoDB)
+// =============================================
 const EXPANDED_ARTICLES_FILE = path.join(__dirname, 'expanded_articles.json');
 
 function loadExpandedArticles() {
@@ -362,16 +446,27 @@ function saveExpandedArticles(articles) {
 
 let expandedArticlesCache = loadExpandedArticles();
 
-app.get('/api/expanded-article/:slug', (req, res) => {
+app.get('/api/expanded-article/:slug', async (req, res) => {
   try {
     const { slug } = req.params;
+    
+    // Try MongoDB first if connected
+    if (isMongoConnected() && Article) {
+      const article = await Article.findOne({ slug }).lean();
+      if (article && article.expandedContent) {
+        console.log(`[Expanded Articles] Retrieved from MongoDB: ${slug}`);
+        return res.json(article);
+      }
+    }
+    
+    // Fallback to file cache
     const article = expandedArticlesCache[slug];
     
     if (!article) {
       return res.status(404).json({ error: 'Expanded article not found' });
     }
     
-    console.log(`[Expanded Articles] Retrieved article: ${slug}`);
+    console.log(`[Expanded Articles] Retrieved from cache: ${slug}`);
     res.json(article);
   } catch (error) {
     console.error('[Expanded Articles] Get error:', error.message);
@@ -379,7 +474,7 @@ app.get('/api/expanded-article/:slug', (req, res) => {
   }
 });
 
-app.post('/api/expanded-article', (req, res) => {
+app.post('/api/expanded-article', async (req, res) => {
   try {
     const { 
       slug, 
@@ -399,18 +494,15 @@ app.post('/api/expanded-article', (req, res) => {
       faq
     } = req.body;
     
-    // Required field validation
     if (!slug || !expandedContent) {
       return res.status(400).json({ error: 'Missing required fields: slug and expandedContent are required' });
     }
     
-    // Minimum word count validation (must be at least 800 words)
     if (!wordCount || wordCount < 800) {
       console.warn(`[Expanded Articles] Rejected article ${slug}: Word count too low (${wordCount || 0})`);
       return res.status(400).json({ error: `Word count too low: ${wordCount || 0}. Minimum 800 words required.` });
     }
     
-    // SEO fields validation
     if (!metaTitle || metaTitle.length < 10) {
       console.warn(`[Expanded Articles] Rejected article ${slug}: Missing or too short metaTitle`);
       return res.status(400).json({ error: 'Missing or invalid metaTitle (minimum 10 characters)' });
@@ -426,30 +518,48 @@ app.post('/api/expanded-article', (req, res) => {
       return res.status(400).json({ error: 'Missing or invalid focusKeyword' });
     }
     
-    // Structure validation - check for H2 headings
     const hasH2 = /<h2[^>]*>/i.test(expandedContent);
     if (!hasH2) {
       console.warn(`[Expanded Articles] Rejected article ${slug}: Missing H2 structure`);
       return res.status(400).json({ error: 'Article must contain H2 headings for proper structure' });
     }
     
-    expandedArticlesCache[slug] = {
+    const articleData = {
       slug,
-      originalTitle,
-      originalContent: originalContent?.substring(0, 1000),
+      title: originalTitle,
+      content: originalContent?.substring(0, 1000),
       expandedContent,
       category,
       wordCount,
       readabilityScore,
-      metaTitle: metaTitle,
-      metaDescription: metaDescription,
-      focusKeyword: focusKeyword,
+      metaTitle,
+      metaDescription,
+      focusKeyword,
       keywords: Array.isArray(keywords) ? keywords : [],
       internalLinks: Array.isArray(internalLinks) ? internalLinks : [],
       externalLinks: Array.isArray(externalLinks) ? externalLinks : [],
       imageAltTexts: Array.isArray(imageAltTexts) ? imageAltTexts : [],
       faq: Array.isArray(faq) ? faq : [],
-      createdAt: new Date().toISOString(),
+      isExpanded: true,
+      updatedAt: new Date()
+    };
+
+    // Try MongoDB first if connected
+    if (isMongoConnected() && Article) {
+      await Article.findOneAndUpdate(
+        { slug },
+        { $set: articleData },
+        { upsert: true, new: true }
+      );
+      console.log(`[Expanded Articles] Saved to MongoDB: ${slug}`);
+    }
+    
+    // Also save to file cache as backup
+    expandedArticlesCache[slug] = {
+      ...articleData,
+      originalTitle,
+      originalContent: originalContent?.substring(0, 1000),
+      createdAt: expandedArticlesCache[slug]?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     
@@ -463,32 +573,576 @@ app.post('/api/expanded-article', (req, res) => {
   }
 });
 
-app.get('/api/expanded-articles/stats', (req, res) => {
+app.get('/api/expanded-articles/stats', async (req, res) => {
   try {
-    const slugs = Object.keys(expandedArticlesCache);
-    const totalArticles = slugs.length;
-    const avgWordCount = totalArticles > 0 
-      ? Math.round(slugs.reduce((sum, slug) => sum + (expandedArticlesCache[slug].wordCount || 0), 0) / totalArticles)
-      : 0;
-    
-    res.json({
-      totalArticles,
-      avgWordCount,
-      articles: slugs.slice(0, 20).map(slug => ({
+    let totalArticles = 0;
+    let avgWordCount = 0;
+    let articles = [];
+
+    if (isMongoConnected() && Article) {
+      totalArticles = await Article.countDocuments({ isExpanded: true });
+      const stats = await Article.aggregate([
+        { $match: { isExpanded: true } },
+        { $group: { _id: null, avgWordCount: { $avg: '$wordCount' } } }
+      ]);
+      avgWordCount = stats[0]?.avgWordCount || 0;
+      articles = await Article.find({ isExpanded: true })
+        .select('slug wordCount createdAt')
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
+    } else {
+      const slugs = Object.keys(expandedArticlesCache);
+      totalArticles = slugs.length;
+      avgWordCount = totalArticles > 0 
+        ? Math.round(slugs.reduce((sum, slug) => sum + (expandedArticlesCache[slug].wordCount || 0), 0) / totalArticles)
+        : 0;
+      articles = slugs.slice(0, 20).map(slug => ({
         slug,
         wordCount: expandedArticlesCache[slug].wordCount,
         createdAt: expandedArticlesCache[slug].createdAt
-      }))
-    });
+      }));
+    }
+    
+    res.json({ totalArticles, avgWordCount: Math.round(avgWordCount), articles });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Backend Server] Running on http://0.0.0.0:${PORT}`);
-  console.log(`[Backend Server] API Key available: ${!!(process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY)}`);
-  console.log(`[Backend Server] Pixabay Key available: ${!!process.env.PIXABAY_API_KEY}`);
-  console.log(`[Backend Server] Mailchimp Key available: ${!!process.env.MAILCHIMP_API_KEY}`);
-  console.log(`[Backend Server] Expanded articles cached: ${Object.keys(expandedArticlesCache).length}`);
+// =============================================
+// ARTICLES API (MongoDB-backed)
+// =============================================
+app.get('/api/articles', async (req, res) => {
+  try {
+    const { category, status, page = 1, limit = 20, search } = req.query;
+    
+    if (!isMongoConnected() || !Article) {
+      return res.json({ 
+        articles: [], 
+        total: 0, 
+        page: 1, 
+        pages: 0,
+        message: 'Database not connected - using client-side data'
+      });
+    }
+
+    const query = {};
+    if (category) query.category = category;
+    if (status) query.status = status;
+    if (search) {
+      query.$text = { $search: search };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [articles, total] = await Promise.all([
+      Article.find(query)
+        .sort({ publishedAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Article.countDocuments(query)
+    ]);
+
+    res.json({
+      articles,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit))
+    });
+  } catch (error) {
+    console.error('[Articles API] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/articles/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    
+    if (!isMongoConnected() || !Article) {
+      return res.status(404).json({ error: 'Article not found - database not connected' });
+    }
+
+    const article = await Article.findOne({ slug }).lean();
+    
+    if (!article) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    // Increment view count
+    await Article.updateOne({ slug }, { $inc: { viewCount: 1 } });
+
+    res.json(article);
+  } catch (error) {
+    console.error('[Articles API] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/articles', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Article) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const articleData = req.body;
+    
+    if (!articleData.slug) {
+      articleData.slug = articleData.title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    const article = new Article(articleData);
+    await article.save();
+
+    console.log(`[Articles API] Created article: ${article.slug}`);
+    res.status(201).json(article);
+  } catch (error) {
+    console.error('[Articles API] Create error:', error.message);
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'Article with this slug already exists' });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/articles/:slug', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Article) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { slug } = req.params;
+    const updates = req.body;
+    
+    const article = await Article.findOneAndUpdate(
+      { slug },
+      { $set: { ...updates, updatedAt: new Date() } },
+      { new: true }
+    );
+
+    if (!article) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    console.log(`[Articles API] Updated article: ${slug}`);
+    res.json(article);
+  } catch (error) {
+    console.error('[Articles API] Update error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/articles/:slug', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Article) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { slug } = req.params;
+    
+    const result = await Article.findOneAndDelete({ slug });
+
+    if (!result) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+
+    console.log(`[Articles API] Deleted article: ${slug}`);
+    res.json({ success: true, message: 'Article deleted' });
+  } catch (error) {
+    console.error('[Articles API] Delete error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// =============================================
+// CATEGORIES API (MongoDB-backed)
+// =============================================
+app.get('/api/categories', async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Category) {
+      // Return default categories if MongoDB not connected
+      return res.json({
+        categories: [
+          { name: 'Technology', slug: 'technology', articleCount: 0 },
+          { name: 'AI', slug: 'ai', articleCount: 0 },
+          { name: 'Business', slug: 'business', articleCount: 0 },
+          { name: 'Science', slug: 'science', articleCount: 0 },
+          { name: 'Entertainment', slug: 'entertainment', articleCount: 0 },
+          { name: 'Product', slug: 'product', articleCount: 0 },
+          { name: 'Global', slug: 'global', articleCount: 0 },
+          { name: 'India', slug: 'india', articleCount: 0 },
+          { name: 'US', slug: 'us', articleCount: 0 }
+        ]
+      });
+    }
+
+    const categories = await Category.find({ isActive: true })
+      .sort({ order: 1, name: 1 })
+      .lean();
+
+    res.json({ categories });
+  } catch (error) {
+    console.error('[Categories API] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/categories/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { page = 1, limit = 12 } = req.query;
+
+    if (!isMongoConnected() || !Article) {
+      return res.json({ 
+        category: { name: slug, slug }, 
+        articles: [], 
+        total: 0,
+        page: 1,
+        pages: 0
+      });
+    }
+
+    // Find articles for this category
+    const categoryName = slug.charAt(0).toUpperCase() + slug.slice(1);
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [articles, total] = await Promise.all([
+      Article.find({ 
+        category: { $regex: new RegExp(`^${categoryName}$`, 'i') },
+        status: 'published' 
+      })
+        .sort({ publishedAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Article.countDocuments({ 
+        category: { $regex: new RegExp(`^${categoryName}$`, 'i') },
+        status: 'published' 
+      })
+    ]);
+
+    res.json({
+      category: { name: categoryName, slug },
+      articles,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit))
+    });
+  } catch (error) {
+    console.error('[Categories API] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/categories', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Category) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const categoryData = req.body;
+    
+    if (!categoryData.slug) {
+      categoryData.slug = categoryData.name.toLowerCase().replace(/\s+/g, '-');
+    }
+
+    const category = new Category(categoryData);
+    await category.save();
+
+    console.log(`[Categories API] Created category: ${category.name}`);
+    res.status(201).json(category);
+  } catch (error) {
+    console.error('[Categories API] Create error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// =============================================
+// ADS API (MongoDB-backed)
+// =============================================
+app.get('/api/ads', async (req, res) => {
+  try {
+    const { placement, status } = req.query;
+
+    if (!isMongoConnected() || !Ad) {
+      return res.json({ ads: [], message: 'Database not connected' });
+    }
+
+    const query = {};
+    if (placement) query.placement = placement;
+    if (status) query.status = status;
+
+    const ads = await Ad.find(query)
+      .sort({ priority: -1, createdAt: -1 })
+      .lean();
+
+    res.json({ ads });
+  } catch (error) {
+    console.error('[Ads API] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/ads/placement/:placement', async (req, res) => {
+  try {
+    const { placement } = req.params;
+
+    if (!isMongoConnected() || !Ad) {
+      return res.json({ ads: [] });
+    }
+
+    const ads = await Ad.getActiveAdsByPlacement(placement);
+    res.json({ ads });
+  } catch (error) {
+    console.error('[Ads API] Error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/ads', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Ad) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const adData = req.body;
+    const ad = new Ad(adData);
+    await ad.save();
+
+    console.log(`[Ads API] Created ad: ${ad.title}`);
+    res.status(201).json(ad);
+  } catch (error) {
+    console.error('[Ads API] Create error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/ads/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Ad) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { id } = req.params;
+    const updates = req.body;
+
+    const ad = await Ad.findByIdAndUpdate(
+      id,
+      { $set: { ...updates, updatedAt: new Date() } },
+      { new: true }
+    );
+
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    console.log(`[Ads API] Updated ad: ${ad.title}`);
+    res.json(ad);
+  } catch (error) {
+    console.error('[Ads API] Update error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/ads/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Ad) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { id } = req.params;
+    const result = await Ad.findByIdAndDelete(id);
+
+    if (!result) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    console.log(`[Ads API] Deleted ad: ${result.title}`);
+    res.json({ success: true, message: 'Ad deleted' });
+  } catch (error) {
+    console.error('[Ads API] Delete error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/ads/:id/impression', async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Ad) {
+      return res.json({ success: true });
+    }
+
+    const { id } = req.params;
+    await Ad.findByIdAndUpdate(id, { $inc: { impressions: 1 } });
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: true }); // Don't fail on tracking errors
+  }
+});
+
+app.post('/api/ads/:id/click', async (req, res) => {
+  try {
+    if (!isMongoConnected() || !Ad) {
+      return res.json({ success: true });
+    }
+
+    const { id } = req.params;
+    await Ad.findByIdAndUpdate(id, { $inc: { clicks: 1 } });
+    res.json({ success: true });
+  } catch (error) {
+    res.json({ success: true }); // Don't fail on tracking errors
+  }
+});
+
+// =============================================
+// AUTHENTICATION API
+// =============================================
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Simple fallback auth if MongoDB not connected
+    if (!isMongoConnected() || !User) {
+      // Fallback: hardcoded admin for development
+      if (email === 'admin@futuretechjournal.com' && password === 'admin123') {
+        return res.json({
+          token: 'admin-token',
+          user: {
+            email: 'admin@futuretechjournal.com',
+            name: 'Admin',
+            role: 'admin'
+          }
+        });
+      }
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = await User.findByEmail(email);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const isValidPassword = await user.comparePassword(password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Account is disabled' });
+    }
+
+    // Update last login
+    await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+
+    const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+    const token = jwt.sign(
+      { 
+        userId: user._id, 
+        email: user.email, 
+        role: user.role,
+        name: user.name
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('[Auth API] Login error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/auth/verify', authenticateToken, (req, res) => {
+  res.json({ 
+    valid: true, 
+    user: req.user 
+  });
+});
+
+app.post('/api/auth/register', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (!isMongoConnected() || !User) {
+      return res.status(503).json({ error: 'Database not available' });
+    }
+
+    const { email, password, name, role = 'user' } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Email, password, and name are required' });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({ error: 'User with this email already exists' });
+    }
+
+    const user = new User({ email, password, name, role });
+    await user.save();
+
+    console.log(`[Auth API] Created user: ${email}`);
+    res.status(201).json({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    });
+  } catch (error) {
+    console.error('[Auth API] Register error:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// =============================================
+// DATABASE STATUS
+// =============================================
+app.get('/api/db/status', (req, res) => {
+  res.json({
+    connected: isMongoConnected(),
+    status: dbConnection ? dbConnection.readyState : 0,
+    statusText: dbConnection ? 
+      ['disconnected', 'connected', 'connecting', 'disconnecting'][dbConnection.readyState] : 
+      'not initialized'
+  });
+});
+
+// =============================================
+// SERVER STARTUP
+// =============================================
+async function startServer() {
+  // Initialize MongoDB connection
+  await initializeMongoDB();
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Backend Server] Running on http://0.0.0.0:${PORT}`);
+    console.log(`[Backend Server] API Key available: ${!!(process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY)}`);
+    console.log(`[Backend Server] Pixabay Key available: ${!!process.env.PIXABAY_API_KEY}`);
+    console.log(`[Backend Server] Mailchimp Key available: ${!!process.env.MAILCHIMP_API_KEY}`);
+    console.log(`[Backend Server] MongoDB connected: ${isMongoConnected()}`);
+    console.log(`[Backend Server] Expanded articles cached: ${Object.keys(expandedArticlesCache).length}`);
+  });
+}
+
+startServer().catch(error => {
+  console.error('[Server] Failed to start:', error);
+  process.exit(1);
 });
