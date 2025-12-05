@@ -73,7 +73,11 @@ const AdminAdsPage: React.FC = () => {
     return PLACEMENT_OPTIONS.find(p => p.value === placement)?.label || placement;
   };
 
-  const sortedAds = [...ads].sort((a, b) => b.updatedAt - a.updatedAt);
+  const sortedAds = [...ads].sort((a, b) => {
+    const timeA = typeof a.updatedAt === 'string' ? new Date(a.updatedAt).getTime() : a.updatedAt;
+    const timeB = typeof b.updatedAt === 'string' ? new Date(b.updatedAt).getTime() : b.updatedAt;
+    return timeB - timeA;
+  });
 
   return (
     <div className="max-w-6xl mx-auto">

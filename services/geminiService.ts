@@ -142,7 +142,7 @@ export const groundedSearch = async (query: string): Promise<{ text: string, sou
 
 // --- ARTICLE GENERATION ---
 
-export const expandContentStream = async (title: string, content: string, category: string) => {
+export const expandContentStream = async (title: string, content: string, _category: string) => {
   try {
     const result = await callAi("generateContent", {
       model: 'gemini-2.0-flash',
@@ -199,7 +199,7 @@ export const generateBlogPost = async (topic: string): Promise<string> => {
 
 // --- IMAGES & VIDEO ---
 
-export const generateImage = async (prompt: string, aspectRatio: string = "16:9", size: string = "1K"): Promise<string | null> => {
+export const generateImage = async (prompt: string, aspectRatio: string = "16:9", _size: string = "1K"): Promise<string | null> => {
   try {
     // Using generateImages action for Imagen 3
     const result = await callAi("generateImages", {
