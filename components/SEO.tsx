@@ -15,7 +15,23 @@ interface SEOProps {
   section?: string;
   schema?: object | object[];
   noindex?: boolean;
+  faqs?: Array<{ question: string; answer: string }>;
 }
+
+const buildFAQSchema = (faqs: Array<{ question: string; answer: string }>): object => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+};
 
 const SEO: React.FC<SEOProps> = ({
   title,
@@ -29,7 +45,8 @@ const SEO: React.FC<SEOProps> = ({
   modifiedTime,
   section,
   schema,
-  noindex = false
+  noindex = false,
+  faqs
 }) => {
   const fullTitle = title 
     ? (title.includes(SEO_CONFIG.siteName) ? sanitizeTitle(title) : `${sanitizeTitle(title)} | ${SEO_CONFIG.siteName}`)
@@ -43,6 +60,26 @@ const SEO: React.FC<SEOProps> = ({
   const robotsContent = noindex 
     ? 'noindex, nofollow' 
     : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+
+  const getCombinedSchema = (): object[] | null => {
+    const schemas: object[] = [];
+    
+    if (schema) {
+      if (Array.isArray(schema)) {
+        schemas.push(...schema);
+      } else {
+        schemas.push(schema);
+      }
+    }
+    
+    if (faqs && faqs.length > 0) {
+      schemas.push(buildFAQSchema(faqs));
+    }
+    
+    return schemas.length > 0 ? schemas : null;
+  };
+
+  const combinedSchema = getCombinedSchema();
 
   return (
     <Helmet>
@@ -80,9 +117,9 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:description" content={finalDescription} />
       <meta name="twitter:image" content={finalImage} />
 
-      {schema && (
+      {combinedSchema && (
         <script type="application/ld+json">
-          {JSON.stringify(Array.isArray(schema) ? schema : [schema])}
+          {JSON.stringify(combinedSchema)}
         </script>
       )}
     </Helmet>

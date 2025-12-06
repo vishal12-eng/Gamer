@@ -31,6 +31,12 @@ const AdminArticleEditorPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'edit' | 'preview' | 'seo'>('edit');
   const [aiLoading, setAiLoading] = useState<string | null>(null);
 
+  const [faqs, setFaqs] = useState<Array<{question: string; answer: string}>>([]);
+  const [faqLoading, setFaqLoading] = useState(false);
+  const [showAddFaqForm, setShowAddFaqForm] = useState(false);
+  const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
+  const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(null);
+
   // Load initial data
   useEffect(() => {
     if (articles.length > 0 && slug) {
@@ -53,6 +59,15 @@ const AdminArticleEditorPage: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [formData, isDirty]);
+
+  // Sync FAQs from formData
+  useEffect(() => {
+    if (formData.faq && Array.isArray(formData.faq)) {
+      setFaqs(formData.faq);
+    } else {
+      setFaqs([]);
+    }
+  }, [formData.faq]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -165,6 +180,59 @@ const AdminArticleEditorPage: React.FC = () => {
     } finally {
       setAiLoading(null);
     }
+  };
+
+  const handleRefreshFaqs = async () => {
+    if (!formData.slug) return;
+    setFaqLoading(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await fetch(`/api/articles/${formData.slug}/faqs/refresh`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to refresh FAQs');
+      }
+      
+      const data = await response.json();
+      const newFaqs = data.faq || data.faqs || [];
+      setFaqs(newFaqs);
+      setFormData(prev => ({ ...prev, faq: newFaqs }));
+      setIsDirty(true);
+      showToast(`FAQs refreshed! ${newFaqs.length} FAQs generated.`);
+    } catch (e) {
+      console.error(e);
+      showToast("Failed to refresh FAQs. Please try again.");
+    } finally {
+      setFaqLoading(false);
+    }
+  };
+
+  const handleDeleteFaq = (index: number) => {
+    const updatedFaqs = faqs.filter((_, i) => i !== index);
+    setFaqs(updatedFaqs);
+    setFormData(prev => ({ ...prev, faq: updatedFaqs }));
+    setIsDirty(true);
+    showToast("FAQ deleted. Save to apply changes.");
+  };
+
+  const handleAddFaq = () => {
+    if (!newFaq.question.trim() || !newFaq.answer.trim()) {
+      showToast("Please fill in both question and answer.");
+      return;
+    }
+    const updatedFaqs = [...faqs, { question: newFaq.question.trim(), answer: newFaq.answer.trim() }];
+    setFaqs(updatedFaqs);
+    setFormData(prev => ({ ...prev, faq: updatedFaqs }));
+    setNewFaq({ question: '', answer: '' });
+    setShowAddFaqForm(false);
+    setIsDirty(true);
+    showToast("FAQ added. Save to apply changes.");
   };
 
   if (loading && !formData.title) return <div className="text-white text-center mt-20">Loading Editor...</div>;
@@ -367,6 +435,116 @@ const AdminArticleEditorPage: React.FC = () => {
                 </div>
                 <span className="text-xs text-gray-500">Generates meta titles, descriptions & tags.</span>
               </button>
+            </div>
+          </div>
+
+          {/* FAQ Manager Card */}
+          <div className="bg-gray-900/50 p-4 rounded-xl border border-white/10">
+            <h3 className="text-sm font-bold text-white mb-3 uppercase tracking-wider flex items-center">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              FAQ Manager
+              <span className="ml-auto text-xs text-gray-500 font-normal">{faqs.length} FAQs</span>
+            </h3>
+            
+            <div className="space-y-3">
+              {faqs.length === 0 ? (
+                <p className="text-xs text-gray-500 italic py-2">No FAQs yet. Use AI to generate or add manually.</p>
+              ) : (
+                <div className="max-h-64 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                  {faqs.map((faq, index) => (
+                    <div key={index} className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
+                      <button
+                        onClick={() => setExpandedFaqIndex(expandedFaqIndex === index ? null : index)}
+                        className="w-full text-left px-3 py-2 flex items-start justify-between gap-2 hover:bg-gray-700/50 transition-colors"
+                      >
+                        <span className="text-xs font-medium text-white line-clamp-2">{faq.question}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <svg 
+                            className={`w-4 h-4 text-gray-400 transition-transform ${expandedFaqIndex === index ? 'rotate-180' : ''}`} 
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </button>
+                      {expandedFaqIndex === index && (
+                        <div className="px-3 py-2 border-t border-gray-700 bg-gray-900/50">
+                          <p className="text-xs text-gray-400 mb-2">{faq.answer}</p>
+                          <button
+                            onClick={() => handleDeleteFaq(index)}
+                            className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete FAQ
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex flex-col gap-2 pt-2 border-t border-gray-700">
+                <button 
+                  onClick={handleRefreshFaqs}
+                  disabled={faqLoading}
+                  className="w-full bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 border border-cyan-500/30 text-xs font-bold py-2 px-4 rounded transition-all flex items-center justify-center gap-2"
+                >
+                  {faqLoading ? (
+                    <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <SparklesIcon className="w-4 h-4" />
+                  )}
+                  Refresh with AI
+                </button>
+                
+                <button 
+                  onClick={() => setShowAddFaqForm(!showAddFaqForm)}
+                  className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 text-xs font-bold py-2 px-4 rounded transition-all flex items-center justify-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Manual FAQ
+                </button>
+                
+                {showAddFaqForm && (
+                  <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Question"
+                      value={newFaq.question}
+                      onChange={(e) => setNewFaq(prev => ({ ...prev, question: e.target.value }))}
+                      className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:ring-cyan-500 focus:border-cyan-500"
+                    />
+                    <textarea
+                      placeholder="Answer"
+                      value={newFaq.answer}
+                      onChange={(e) => setNewFaq(prev => ({ ...prev, answer: e.target.value }))}
+                      rows={2}
+                      className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1.5 text-xs text-white placeholder-gray-500 focus:ring-cyan-500 focus:border-cyan-500 resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleAddFaq}
+                        className="flex-1 bg-green-600/20 hover:bg-green-600/40 text-green-300 border border-green-500/30 text-xs font-bold py-1.5 px-3 rounded transition-all"
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={() => { setShowAddFaqForm(false); setNewFaq({ question: '', answer: '' }); }}
+                        className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs font-bold py-1.5 px-3 rounded transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

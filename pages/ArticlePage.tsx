@@ -668,6 +668,7 @@ const ArticlePage: React.FC = () => {
         section={article.category}
         keywords={keywords}
         schema={schema}
+        faqs={expandedResult?.faq}
       />
       <ReadingProgressBar targetRef={articleContentRef} />
       <FloatingAIToolbar handlers={handlers} state={state} />

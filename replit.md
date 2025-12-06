@@ -36,6 +36,8 @@ The project supports MongoDB Atlas as an optional database backend with automati
 **API Endpoints**:
 - `GET/POST/PUT/DELETE /api/articles` - Article CRUD operations
 - `GET /api/articles/:slug` - Get single article with view tracking
+- `GET /api/articles/:slug/faqs` - Get FAQs for an article
+- `POST /api/articles/:slug/faqs/refresh` - Regenerate FAQs with AI (Admin only)
 - `GET/POST /api/categories` - Category operations
 - `GET /api/categories/:slug` - Get category with articles
 - `GET/POST/PUT/DELETE /api/ads` - Ad management
@@ -98,6 +100,12 @@ MAILCHIMP_LIST_ID     - Mailchimp audience list ID
 - **Deployment**: Hostinger/Netlify compatible (static build with API proxy)
 
 ## Recent Changes
+- **December 6, 2025**: Implemented Featured Snippet + FAQ System with:
+  - FAQ API routes (GET /api/articles/:slug/faqs, POST /api/articles/:slug/faqs/refresh)
+  - FAQItem.tsx and FAQSection.tsx UI components with accordion animation
+  - JSON-LD FAQPage schema in SEO.tsx for search engine structured data
+  - Admin FAQ Manager in AdminArticleEditorPage with view/add/delete/refresh controls
+  - Auto-generated FAQs during article expansion using Gemini AI
 - **December 5, 2025**: Fixed LSP errors in AdminAdsPage.tsx (type conversion for sorting) and geminiService.ts (unused parameters)
 - **December 5, 2025**: Removed duplicate files (ThemeToggle, TagIcon, TechnologyIcon, TranslateIcon) - kept only properly organized ones
 - **December 5, 2025**: Security fix - removed exposed malformed MONGODB_URI, moved to secrets
@@ -149,17 +157,48 @@ module.exports.handler = schedule('0 0 * * *', async () => {
 │   ├── lib/
 │   │   └── db.cjs          # MongoDB connection utility
 │   └── models/
-│       ├── Article.cjs     # Article schema
+│       ├── Article.cjs     # Article schema (includes faq field)
 │       ├── Category.cjs    # Category schema
 │       ├── Ad.cjs          # Ad schema
 │       ├── User.cjs        # User schema
 │       └── index.cjs       # Model exports
+├── components/
+│   ├── FAQItem.tsx         # FAQ accordion item component
+│   ├── FAQSection.tsx      # FAQ section container
+│   ├── SEO.tsx             # SEO component with JSON-LD support
+│   └── ...                 # Other UI components
+├── pages/
+│   ├── ArticlePage.tsx     # Article page with FAQ section
+│   ├── AdminArticleEditorPage.tsx  # Admin editor with FAQ Manager
+│   └── ...                 # Other pages
 ├── context/
 │   └── AdsContext.tsx      # Ad state management
 ├── hooks/
 │   └── useArticles.tsx     # Article fetching hook
 ├── services/
-│   └── articleExpansionService.ts  # AI article expansion
-├── types.ts                # TypeScript type definitions
+│   └── articleExpansionService.ts  # AI article expansion with FAQ generation
+├── types.ts                # TypeScript type definitions (includes FAQItem)
 └── package.json
 ```
+
+## FAQ System
+
+### Overview
+The FAQ system automatically generates 3-5 FAQs for each article during AI expansion and displays them with proper JSON-LD structured data for search engine rich snippets.
+
+### How It Works
+1. **Auto-Generation**: When an article is expanded via AI, FAQs are generated along with the content
+2. **Storage**: FAQs are stored in the Article model's `faq` array field in MongoDB
+3. **Display**: FAQs appear in an accordion UI on article pages after the main content
+4. **SEO**: FAQPage JSON-LD schema is injected into the page head when FAQs exist
+
+### Admin Controls
+Access the FAQ Manager in the Admin Article Editor sidebar:
+- **View FAQs**: See all existing FAQs for the article
+- **Refresh with AI**: Regenerate FAQs using Gemini AI
+- **Delete FAQ**: Remove individual FAQ items
+- **Add Manual FAQ**: Create custom FAQ entries
+
+### API Endpoints
+- `GET /api/articles/:slug/faqs` - Returns FAQ array for an article
+- `POST /api/articles/:slug/faqs/refresh` - Regenerate FAQs (Admin only, requires JWT token)

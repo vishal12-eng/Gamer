@@ -687,6 +687,118 @@ app.get('/api/articles/:slug', async (req, res) => {
   }
 });
 
+// =============================================
+// FAQ API
+// =============================================
+app.get('/api/articles/:slug/faqs', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    console.log(`[FAQ API] Getting FAQs for article: ${slug}`);
+    
+    if (!isMongoConnected() || !Article) {
+      console.log('[FAQ API] MongoDB not connected, returning empty array');
+      return res.json({ faqs: [], success: true });
+    }
+
+    const article = await Article.findOne({ slug }).select('faq').lean();
+    
+    if (!article) {
+      console.log(`[FAQ API] Article not found: ${slug}`);
+      return res.json({ faqs: [], success: true });
+    }
+
+    const faqs = Array.isArray(article.faq) ? article.faq : [];
+    console.log(`[FAQ API] Found ${faqs.length} FAQs for: ${slug}`);
+    res.json({ faqs, success: true });
+  } catch (error) {
+    console.error('[FAQ API] Error getting FAQs:', error.message);
+    res.status(500).json({ error: 'Internal server error', success: false });
+  }
+});
+
+app.post('/api/articles/:slug/faqs/refresh', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { slug } = req.params;
+    console.log(`[FAQ API] Refreshing FAQs for article: ${slug}`);
+    
+    if (!isMongoConnected() || !Article) {
+      console.log('[FAQ API] MongoDB not connected');
+      return res.status(503).json({ error: 'Database not available', success: false });
+    }
+
+    const article = await Article.findOne({ slug }).lean();
+    
+    if (!article) {
+      console.log(`[FAQ API] Article not found: ${slug}`);
+      return res.status(404).json({ error: 'Article not found', success: false });
+    }
+
+    const articleTitle = article.title || article.metaTitle || 'Article';
+    const articleContent = article.expandedContent || article.content || '';
+    
+    const prompt = `Based on the following article, generate 3-5 frequently asked questions (FAQs) with detailed answers. Return ONLY a valid JSON array of objects with "question" and "answer" fields.
+
+Article Title: ${articleTitle}
+
+Article Content:
+${articleContent.substring(0, 3000)}
+
+Return format (JSON array only, no markdown):
+[{"question": "...", "answer": "..."}]`;
+
+    console.log(`[FAQ API] Calling AI to generate FAQs for: ${slug}`);
+    
+    const { GoogleGenAI } = require('@google/genai');
+    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      console.error('[FAQ API] AI API key not configured');
+      return res.status(500).json({ error: 'AI API key not configured', success: false });
+    }
+    
+    const ai = new GoogleGenAI({ apiKey });
+    const aiResponse = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: prompt,
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 2048
+      }
+    });
+
+    let faqs = [];
+    try {
+      const responseText = aiResponse.text || '';
+      let jsonStr = responseText;
+      if (jsonStr.includes('```')) {
+        jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      }
+      jsonStr = jsonStr.trim();
+      faqs = JSON.parse(jsonStr);
+      
+      if (!Array.isArray(faqs)) {
+        throw new Error('AI response is not an array');
+      }
+      
+      faqs = faqs.filter(faq => faq.question && faq.answer).slice(0, 5);
+    } catch (parseError) {
+      console.error('[FAQ API] Failed to parse AI response:', parseError.message);
+      return res.status(500).json({ error: 'Failed to parse AI response', success: false });
+    }
+
+    await Article.findOneAndUpdate(
+      { slug },
+      { $set: { faq: faqs, updatedAt: new Date() } }
+    );
+
+    console.log(`[FAQ API] Generated ${faqs.length} FAQs for: ${slug}`);
+    res.json({ faqs, success: true });
+  } catch (error) {
+    console.error('[FAQ API] Error refreshing FAQs:', error.message);
+    res.status(500).json({ error: 'Internal server error', success: false });
+  }
+});
+
 app.post('/api/articles', authenticateToken, requireAdmin, async (req, res) => {
   try {
     if (!isMongoConnected() || !Article) {
