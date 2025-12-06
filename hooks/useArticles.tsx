@@ -226,52 +226,71 @@ export const ArticleProvider: React.FC<{ children: ReactNode }> = ({ children })
     setError(null);
     
     try {
+      // STEP 1: Fetch RSS articles FIRST (fresh news - primary source)
+      const rssArticles = await fetchFromRss();
+      
+      // Sort RSS articles by date (newest first) - these will be the hero/latest/trending
+      const sortedRssArticles = [...rssArticles].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      console.log(`[useArticles] Fetched ${sortedRssArticles.length} RSS articles (sorted by date)`);
+      
+      // STEP 2: Fetch MongoDB articles (stored/expanded articles - supplementary)
       const { articles: mongoArticles, connected } = await fetchFromMongoDB();
       setIsDbConnected(connected);
       
-      // Start with MongoDB articles if available
-      let allArticles: Article[] = [];
+      // Sort MongoDB articles among themselves (newest stored first)
+      const sortedMongoArticles = [...mongoArticles].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      console.log(`[useArticles] Fetched ${sortedMongoArticles.length} MongoDB articles`);
       
-      if (connected && mongoArticles.length > 0) {
-        allArticles = [...mongoArticles];
-        console.log(`[useArticles] Starting with ${mongoArticles.length} MongoDB articles`);
-      }
+      // STEP 3: Build final feed with RSS FIRST, MongoDB AFTER
+      // Remove duplicates using slug - RSS takes priority
+      const rssSlugs = new Set(sortedRssArticles.map(a => a.slug));
+      const rssTitles = new Set(sortedRssArticles.map(a => a.title.toLowerCase()));
       
-      // Always try to fetch RSS articles to augment MongoDB results
-      const rssArticles = await fetchFromRss();
+      // Filter MongoDB articles to remove duplicates (by slug or title)
+      const uniqueMongoArticles = sortedMongoArticles.filter(
+        a => !rssSlugs.has(a.slug) && !rssTitles.has(a.title.toLowerCase())
+      );
       
-      if (rssArticles.length > 0) {
-        // Create a set of existing slugs to avoid duplicates
-        const existingSlugs = new Set(allArticles.map(a => a.slug));
-        const existingTitles = new Set(allArticles.map(a => a.title));
-        
-        // Add RSS articles that aren't already in the collection
-        const newRssArticles = rssArticles.filter(
-          a => !existingSlugs.has(a.slug) && !existingTitles.has(a.title)
+      // FINAL ORDER: [...RSS (sorted), ...MongoDB (sorted)] - RSS always first
+      let finalArticles: Article[] = [...sortedRssArticles, ...uniqueMongoArticles];
+      console.log(`[useArticles] Combined: ${sortedRssArticles.length} RSS + ${uniqueMongoArticles.length} MongoDB = ${finalArticles.length} total`);
+      
+      // STEP 4: If no RSS articles, use mock as fallback for hero/latest sections
+      if (sortedRssArticles.length === 0) {
+        console.warn('[useArticles] No RSS articles available - using mock data for fresh content');
+        // Sort mock articles by date (newest first)
+        const sortedMockArticles = [...mockArticles].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         
-        allArticles = [...allArticles, ...newRssArticles];
-        console.log(`[useArticles] Added ${newRssArticles.length} new articles from RSS`);
+        // Mock articles go FIRST (as RSS replacement), then MongoDB
+        const mockSlugs = new Set(sortedMockArticles.map(a => a.slug));
+        const mockTitles = new Set(sortedMockArticles.map(a => a.title.toLowerCase()));
+        
+        const uniqueMongoAfterMock = sortedMongoArticles.filter(
+          a => !mockSlugs.has(a.slug) && !mockTitles.has(a.title.toLowerCase())
+        );
+        
+        finalArticles = [...sortedMockArticles, ...uniqueMongoAfterMock];
+        console.log(`[useArticles] Using mock fallback: ${sortedMockArticles.length} mock + ${uniqueMongoAfterMock.length} MongoDB`);
       }
       
-      // Add mock articles to fill out the collection (avoiding duplicates)
-      if (allArticles.length > 0) {
-        const existingTitles = new Set(allArticles.map(a => a.title));
-        const nonDuplicateMock = mockArticles.filter(m => !existingTitles.has(m.title));
-        allArticles = [...allArticles, ...nonDuplicateMock];
-        console.log(`[useArticles] Added ${nonDuplicateMock.length} mock articles for completeness`);
-      } else {
-        // Only use mock articles if we have nothing from MongoDB or RSS
-        allArticles = [...mockArticles];
-        console.log(`[useArticles] No articles from MongoDB or RSS. Using ${mockArticles.length} mock articles`);
-      }
+      // STEP 5: Final deduplication by slug (preserve order - first occurrence wins)
+      const seenSlugs = new Set<string>();
+      const deduplicatedArticles = finalArticles.filter(article => {
+        if (seenSlugs.has(article.slug)) {
+          return false;
+        }
+        seenSlugs.add(article.slug);
+        return true;
+      });
       
-      // Remove duplicates and sort by date
-      const uniqueArticles = Array.from(new Map(allArticles.map(a => [a.slug, a])).values());
-      uniqueArticles.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
-      console.log(`[useArticles] Final article count: ${uniqueArticles.length}`);
-      setArticles(mergeWithLocalEdits(uniqueArticles));
+      console.log(`[useArticles] Final feed: ${deduplicatedArticles.length} articles (Hero from ${sortedRssArticles.length > 0 ? 'RSS' : 'mock'})`);
+      setArticles(mergeWithLocalEdits(deduplicatedArticles));
       
     } catch (e: any) {
       console.error("Critical error in fetchArticles:", e);
