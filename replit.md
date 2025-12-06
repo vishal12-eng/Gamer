@@ -100,6 +100,14 @@ MAILCHIMP_LIST_ID     - Mailchimp audience list ID
 - **Deployment**: Hostinger/Netlify compatible (static build with API proxy)
 
 ## Recent Changes
+- **December 6, 2025**: Fixed Theme Toggle System - Dark/Light mode now works correctly:
+  - Root cause: Tailwind CSS 4.x with `@import "tailwindcss"` was not loading `tailwind.config.js`
+  - Fix: Added `@config "./tailwind.config.js";` to `index.css` to enable `darkMode: 'class'`
+  - Theme applies on `<html>` element, toggles instantly, persists to localStorage
+- **December 6, 2025**: Fixed Article Loading System - RSS articles now prioritized over MongoDB:
+  - Rewrote `refreshArticles()` in `hooks/useArticles.tsx`
+  - Order: RSS (sorted by date) → MongoDB (supplementary) → Mock (fallback)
+  - Hero article always comes from RSS (newest)
 - **December 6, 2025**: Implemented Featured Snippet + FAQ System with:
   - FAQ API routes (GET /api/articles/:slug/faqs, POST /api/articles/:slug/faqs/refresh)
   - FAQItem.tsx and FAQSection.tsx UI components with accordion animation
