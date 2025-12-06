@@ -876,7 +876,7 @@ const ArticlePage: React.FC = () => {
         {/* Internal Links - Related Categories */}
         {expandedResult?.internalLinks && expandedResult.internalLinks.length > 0 && (
           <section className="mt-8">
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+            <h3 className="text-lg font-semibold text-black dark:text-white mb-3 flex items-center">
               <svg className="w-5 h-5 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
@@ -887,7 +887,7 @@ const ArticlePage: React.FC = () => {
                 <Link
                   key={index}
                   to={link.url}
-                  className="inline-flex items-center px-4 py-2 bg-gray-800/50 hover:bg-cyan-900/50 border border-gray-700/50 hover:border-cyan-600/50 rounded-lg text-gray-300 hover:text-cyan-300 transition-all text-sm"
+                  className="inline-flex items-center px-4 py-2 bg-gray-800/50 hover:bg-cyan-900/50 border border-gray-700/50 hover:border-cyan-600/50 rounded-lg text-black dark:text-gray-300 hover:text-cyan-300 transition-all text-sm"
                 >
                   {link.text}
                   <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -902,7 +902,7 @@ const ArticlePage: React.FC = () => {
         {/* External References */}
         {expandedResult?.externalLinks && expandedResult.externalLinks.length > 0 && (
           <section className="mt-6">
-            <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
+            <h3 className="text-lg font-semibold text-black dark:text-white mb-3 flex items-center">
               <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
@@ -915,7 +915,7 @@ const ArticlePage: React.FC = () => {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center px-4 py-2 bg-gray-800/30 hover:bg-gray-700/50 border border-gray-700/30 rounded-lg text-gray-400 hover:text-gray-200 transition-all text-sm"
+                  className="inline-flex items-center px-4 py-2 bg-gray-800/30 hover:bg-gray-700/50 border border-gray-700/30 rounded-lg text-black dark:text-gray-400 hover:text-gray-200 transition-all text-sm"
                 >
                   {link.text}
                   <span className="ml-2 text-xs text-gray-500">({link.source})</span>
@@ -954,7 +954,7 @@ const ArticlePage: React.FC = () => {
 
         {/* --- MOBILE/TABLET AI TOOLBAR --- */}
         <div className="lg:hidden mt-12 border-t border-gray-700 pt-8">
-          <h3 className="text-2xl font-bold mb-4 text-white flex items-center">
+          <h3 className="text-2xl font-bold mb-4 text-black dark:text-white flex items-center">
             <SparklesIcon className="w-6 h-6 mr-3 text-cyan-400" />
             AI Toolkit
           </h3>
