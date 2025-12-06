@@ -229,29 +229,49 @@ export const ArticleProvider: React.FC<{ children: ReactNode }> = ({ children })
       const { articles: mongoArticles, connected } = await fetchFromMongoDB();
       setIsDbConnected(connected);
       
+      // Start with MongoDB articles if available
+      let allArticles: Article[] = [];
+      
       if (connected && mongoArticles.length > 0) {
-        const uniqueArticles = Array.from(new Map(mongoArticles.map(a => [a.slug, a])).values());
-        uniqueArticles.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        setArticles(mergeWithLocalEdits(uniqueArticles));
-        return;
+        allArticles = [...mongoArticles];
+        console.log(`[useArticles] Starting with ${mongoArticles.length} MongoDB articles`);
       }
       
+      // Always try to fetch RSS articles to augment MongoDB results
       const rssArticles = await fetchFromRss();
       
       if (rssArticles.length > 0) {
-        const uniqueArticles = Array.from(new Map(rssArticles.map(a => [a.title, a])).values());
-        uniqueArticles.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // Create a set of existing slugs to avoid duplicates
+        const existingSlugs = new Set(allArticles.map(a => a.slug));
+        const existingTitles = new Set(allArticles.map(a => a.title));
         
-        const liveTitles = new Set(uniqueArticles.map(a => a.title));
-        const nonDuplicateMock = mockArticles.filter(m => !liveTitles.has(m.title));
+        // Add RSS articles that aren't already in the collection
+        const newRssArticles = rssArticles.filter(
+          a => !existingSlugs.has(a.slug) && !existingTitles.has(a.title)
+        );
         
-        const combined = [...uniqueArticles, ...nonDuplicateMock];
-        setArticles(mergeWithLocalEdits(combined));
-        return;
+        allArticles = [...allArticles, ...newRssArticles];
+        console.log(`[useArticles] Added ${newRssArticles.length} new articles from RSS`);
       }
       
-      console.warn("[useArticles] No articles from MongoDB or RSS. Serving mock articles.");
-      setArticles(mergeWithLocalEdits(mockArticles));
+      // Add mock articles to fill out the collection (avoiding duplicates)
+      if (allArticles.length > 0) {
+        const existingTitles = new Set(allArticles.map(a => a.title));
+        const nonDuplicateMock = mockArticles.filter(m => !existingTitles.has(m.title));
+        allArticles = [...allArticles, ...nonDuplicateMock];
+        console.log(`[useArticles] Added ${nonDuplicateMock.length} mock articles for completeness`);
+      } else {
+        // Only use mock articles if we have nothing from MongoDB or RSS
+        allArticles = [...mockArticles];
+        console.log(`[useArticles] No articles from MongoDB or RSS. Using ${mockArticles.length} mock articles`);
+      }
+      
+      // Remove duplicates and sort by date
+      const uniqueArticles = Array.from(new Map(allArticles.map(a => [a.slug, a])).values());
+      uniqueArticles.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      console.log(`[useArticles] Final article count: ${uniqueArticles.length}`);
+      setArticles(mergeWithLocalEdits(uniqueArticles));
       
     } catch (e: any) {
       console.error("Critical error in fetchArticles:", e);
