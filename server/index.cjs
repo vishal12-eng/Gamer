@@ -122,11 +122,14 @@ process.on('SIGTERM', () => {
 // =============================================
 app.post('/api/aiHandler', async (req, res) => {
   try {
-    const apiKey = process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
+    let apiKey = process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error('Server Error: Missing API_KEY');
       return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
     }
+
+    // Sanitize API key by removing invisible Unicode characters (zero-width, BOM, directional marks, etc.)
+    apiKey = apiKey.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '').trim();
 
     const { action, payload } = req.body;
     const ai = new GoogleGenAI({ apiKey });
