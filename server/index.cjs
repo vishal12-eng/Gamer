@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { GoogleGenAI } = require('@google/genai');
 const { processAndSaveArticles, fetchRssFeeds, feedMap } = require('./rssIngestionService.cjs');
 
@@ -15,7 +17,6 @@ app.use(express.json({ limit: '50mb' }));
 let dbConnection = null;
 let Article, Category, Ad, User;
 let Analytics, AIUsage, Log;
-let jwt, bcrypt;
 
 async function initializeMongoDB() {
   try {
@@ -48,10 +49,6 @@ async function initializeMongoDB() {
     AIUsage = require('../src/models/AIUsage.cjs');
     Log = require('../src/models/Log.cjs');
 
-    // Load JWT and bcrypt
-    jwt = require('jsonwebtoken');
-    bcrypt = require('bcryptjs');
-
     return true;
   } catch (error) {
     console.warn('[MongoDB] Connection failed:', error.message);
@@ -74,19 +71,9 @@ const authenticateToken = (req, res, next) => {
   const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
   
   try {
-    if (jwt) {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      req.user = decoded;
-      next();
-    } else {
-      // Fallback: simple token check if JWT not available
-      if (token === 'admin-token') {
-        req.user = { role: 'admin' };
-        next();
-      } else {
-        return res.status(403).json({ error: 'Invalid token' });
-      }
-    }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
   } catch (error) {
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
