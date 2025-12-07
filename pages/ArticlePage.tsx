@@ -5,7 +5,7 @@ import { Article, Category } from '../types';
 import ReadingProgressBar from '../components/ReadingProgressBar';
 import ArticleCard from '../components/ArticleCard';
 import { summarizeText, translateText, suggestTags, analyzeReadability, improveReadability } from '../services/geminiService';
-import { expandArticleWithSEO, getExpandedArticleFromDB, saveExpandedArticleToDB, ExpandedArticleResult } from '../services/articleExpansionService';
+import { getExpandedArticleFromDB, ExpandedArticleResult } from '../services/articleExpansionService';
 import { fetchPixabayImage } from '../services/pixabayService';
 import { 
   generateSEOTitle, 
@@ -278,7 +278,7 @@ const ArticlePage: React.FC = () => {
       setExpandedResult(null);
       setIsExpanding(false);
 
-      // --- Load Expanded Content from DB or Auto-Expand ---
+      // --- Load Expanded Content from DB (NO auto-expansion - handled by backend only) ---
       const loadExpandedContent = async () => {
         try {
           const dbResult = await getExpandedArticleFromDB(foundArticle.slug);
@@ -286,11 +286,12 @@ const ArticlePage: React.FC = () => {
             console.log(`[ArticlePage] Loaded SEO-expanded content from DB for: ${foundArticle.slug}`);
             setExpandedResult(dbResult);
           } else {
-            triggerAutoExpansion(foundArticle);
+            console.log(`[ArticlePage] No expanded content in DB for: ${foundArticle.slug} - showing original content`);
+            setExpandedResult(null);
           }
         } catch (error) {
-          console.error('[ArticlePage] Failed to load from DB, triggering expansion:', error);
-          triggerAutoExpansion(foundArticle);
+          console.error('[ArticlePage] Failed to load from DB:', error);
+          setExpandedResult(null);
         }
       };
       loadExpandedContent();
@@ -361,46 +362,6 @@ const ArticlePage: React.FC = () => {
 
     loadArticleImage();
   }, [article]);
-
-  const triggerAutoExpansion = async (articleToExpand: Article) => {
-    setIsExpanding(true);
-    console.log(`[ArticlePage] Starting SEO AI expansion for: ${articleToExpand.title}`);
-    
-    try {
-      const result = await expandArticleWithSEO(
-        articleToExpand.title,
-        articleToExpand.content,
-        articleToExpand.category
-      );
-      
-      if (result.success && result.expandedContent) {
-        console.log(`[ArticlePage] SEO expansion complete: ${result.wordCount} words, focus: ${result.focusKeyword}`);
-        setExpandedResult(result);
-        
-        const saveResult = await saveExpandedArticleToDB(
-          articleToExpand.slug,
-          articleToExpand.title,
-          articleToExpand.content,
-          result,
-          articleToExpand.category
-        );
-        
-        if (saveResult.success) {
-          console.log(`[ArticlePage] Saved SEO article to DB: ${articleToExpand.slug}`);
-        } else {
-          console.warn(`[ArticlePage] Failed to save to DB (but content displayed): ${saveResult.error}`);
-        }
-      } else {
-        console.error('[ArticlePage] SEO expansion failed:', result.error);
-        setExpandedResult(null);
-      }
-    } catch (error) {
-      console.error("[ArticlePage] Failed to expand article:", error);
-      setExpandedResult(null); 
-    } finally {
-      setIsExpanding(false);
-    }
-  };
 
   const expandedContent = expandedResult?.expandedContent || '';
   const contentForProcessing = (expandedContent && expandedContent.length > 0) ? expandedContent : (article?.content || '');

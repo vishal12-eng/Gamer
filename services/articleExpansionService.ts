@@ -78,7 +78,26 @@ const CATEGORY_ROUTES: Record<string, string> = {
   'US': '/category/us'
 };
 
+/**
+ * @deprecated This function is DISABLED on the frontend to prevent uncontrolled AI token usage.
+ * Article expansion now happens ONLY during backend RSS ingestion via /api/admin/rss-ingest.
+ * Frontend should use getExpandedArticleFromDB() to load pre-expanded content.
+ */
 export const expandArticleWithSEO = async (
+  _title: string,
+  _originalContent: string,
+  _category: string
+): Promise<ExpandedArticleResult> => {
+  console.error('[ArticleExpansion] BLOCKED: Frontend expansion is disabled. Use backend RSS ingestion instead.');
+  return createErrorResult('Frontend expansion is disabled. Content is expanded during backend RSS ingestion only.');
+};
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/**
+ * ORIGINAL expandArticleWithSEO function - PRESERVED FOR BACKEND REFERENCE ONLY
+ * The actual implementation is in server/rssIngestionService.cjs
+ */
+const _expandArticleWithSEO_BACKEND_REFERENCE = async (
   title: string,
   originalContent: string,
   category: string

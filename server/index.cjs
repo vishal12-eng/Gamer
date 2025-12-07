@@ -3,6 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
+const { processAndSaveArticles, fetchRssFeeds, feedMap } = require('./rssIngestionService.cjs');
 
 const app = express();
 const PORT = 3001;
@@ -1585,6 +1586,92 @@ function stopCleanupScheduler() {
     console.log('[Article Cleanup] Scheduler stopped');
   }
 }
+
+// =============================================
+// ADMIN RSS INGESTION API (Backend AI Expansion)
+// =============================================
+let rssIngestionStatus = {
+  isRunning: false,
+  lastRun: null,
+  lastResult: null
+};
+
+app.post('/api/admin/rss-ingest', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    if (rssIngestionStatus.isRunning) {
+      return res.status(409).json({ 
+        error: 'RSS ingestion already in progress', 
+        status: rssIngestionStatus 
+      });
+    }
+
+    const { maxArticles = 10, categories = null, skipExisting = true } = req.body;
+
+    console.log(`[RSS Ingest API] Starting ingestion: maxArticles=${maxArticles}, categories=${categories ? categories.join(',') : 'all'}`);
+    
+    rssIngestionStatus.isRunning = true;
+    rssIngestionStatus.lastRun = new Date().toISOString();
+
+    const result = await processAndSaveArticles(Article, expandedArticlesCache, saveExpandedArticles, {
+      maxArticles,
+      categories,
+      skipExisting
+    });
+
+    rssIngestionStatus.isRunning = false;
+    rssIngestionStatus.lastResult = result;
+
+    console.log(`[RSS Ingest API] Completed: ${result.articlesProcessed} processed, ${result.skipped} skipped, ${result.failed} failed`);
+
+    res.json({
+      success: result.success,
+      message: `Processed ${result.articlesProcessed} articles`,
+      ...result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    rssIngestionStatus.isRunning = false;
+    rssIngestionStatus.lastResult = { success: false, error: error.message };
+    console.error('[RSS Ingest API] Error:', error.message);
+    res.status(500).json({ error: error.message, success: false });
+  }
+});
+
+app.get('/api/admin/rss-ingest/status', authenticateToken, async (req, res) => {
+  try {
+    res.json({
+      ...rssIngestionStatus,
+      availableCategories: Object.keys(feedMap),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/rss-preview', authenticateToken, async (req, res) => {
+  try {
+    console.log('[RSS Preview API] Fetching RSS feeds for preview...');
+    const articles = await fetchRssFeeds();
+    
+    const preview = articles.slice(0, 50).map(a => ({
+      slug: a.slug,
+      title: a.title.substring(0, 100),
+      category: a.category,
+      date: a.date
+    }));
+
+    res.json({
+      success: true,
+      totalFetched: articles.length,
+      preview,
+      categories: Object.keys(feedMap)
+    });
+  } catch (error) {
+    console.error('[RSS Preview API] Error:', error.message);
+    res.status(500).json({ error: error.message, success: false });
+  }
+});
 
 // =============================================
 // SERVER STARTUP
