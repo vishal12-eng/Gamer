@@ -100,6 +100,13 @@ MAILCHIMP_LIST_ID     - Mailchimp audience list ID
 - **Deployment**: Hostinger/Netlify compatible (static build with API proxy)
 
 ## Recent Changes
+- **December 7, 2025**: AI Quota Fix - Disabled frontend-triggered article expansion:
+  - Article expansion now happens ONLY during backend RSS ingestion (controlled by admin)
+  - Frontend `expandArticleWithSEO` function returns blocked error message
+  - `ArticlePage.tsx` now only loads pre-expanded content from DB (read-only)
+  - Added admin endpoints: `POST /api/admin/rss-ingest`, `GET /api/admin/rss-ingest/status`, `GET /api/admin/rss-preview`
+  - Backend has safeguards: checks `isExpanded` flag and content length before AI calls
+  - Existing AI features (summarize, translate, TTS) still work on-demand
 - **December 6, 2025**: Fixed Theme Toggle System - Dark/Light mode now works correctly:
   - Root cause: Tailwind CSS 4.x with `@import "tailwindcss"` was not loading `tailwind.config.js`
   - Fix: Added `@config "./tailwind.config.js";` to `index.css` to enable `darkMode: 'class'`
