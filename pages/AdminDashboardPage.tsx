@@ -21,30 +21,45 @@ const AdminDashboardPage: React.FC = () => {
   ]);
   const [chartData, setChartData] = useState<number[]>([40, 65, 45, 80, 55, 90, 75]);
 
+  const [logs, setLogs] = useState<any[]>([
+    { type: 'article_gen', label: 'Article Gen', color: 'green', timeAgo: '2m', details: '' },
+    { type: 'seo_update', label: 'SEO Update', color: 'blue', timeAgo: '1h', details: '' },
+    { type: 'ai_gen', label: 'AI Gen', color: 'purple', timeAgo: '3h', details: '' },
+    { type: 'login', label: 'Login (Admin)', color: 'yellow', timeAgo: '5h', details: '' },
+  ]);
+
   // Fetch live metrics from backend
   useEffect(() => {
+    const getAuthToken = () => localStorage.getItem('authToken') || '';
+    
     const fetchMetrics = async () => {
       try {
-        console.log('Fetching dashboard metrics...');
-        const response = await fetch('/.netlify/functions/dashboardMetrics');
-        console.log('Response status:', response.status);
+        const token = getAuthToken();
+        const headers = { 'Authorization': `Bearer ${token}` };
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const [statsRes, chartRes, logsRes] = await Promise.all([
+          fetch('/api/admin/stats', { headers }),
+          fetch('/api/admin/ai-usage', { headers }),
+          fetch('/api/admin/logs', { headers })
+        ]);
+        
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          if (statsData.stats) setStats(statsData.stats);
+          if (statsData.systemStatus) setSystemStatus(statsData.systemStatus);
         }
         
-        const data = await response.json();
-        console.log('Metrics data received:', data);
+        if (chartRes.ok) {
+          const chartDataRes = await chartRes.json();
+          if (chartDataRes.chartData) setChartData(chartDataRes.chartData);
+        }
         
-        if (data.stats && data.stats.length > 0) {
-          setStats(data.stats);
-          setChartData(data.chartData);
-          setSystemStatus(data.systemStatus);
-          console.log('Stats updated successfully');
+        if (logsRes.ok) {
+          const logsData = await logsRes.json();
+          if (logsData.logs && logsData.logs.length > 0) setLogs(logsData.logs);
         }
       } catch (error) {
         console.error('Failed to fetch metrics:', error);
-        // Set default stats if fetch fails
         setStats([
           { label: 'Articles Today', value: '--', trend: 'N/A', color: 'text-cyan-400', border: 'border-cyan-500/30' },
           { label: 'AI Credits Used', value: '--', trend: 'N/A', color: 'text-purple-400', border: 'border-purple-500/30' },
@@ -55,7 +70,7 @@ const AdminDashboardPage: React.FC = () => {
     };
 
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 10000); // Refresh every 10 seconds
+    const interval = setInterval(fetchMetrics, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -212,42 +227,27 @@ const AdminDashboardPage: React.FC = () => {
                 <div className="p-2">
                     <table className="w-full text-left text-sm text-gray-400">
                         <tbody className="divide-y divide-gray-800">
-                            <tr className="hover:bg-white/5 transition-colors">
+                            {logs.slice(0, 4).map((log, idx) => {
+                              const colorClasses: Record<string, string> = {
+                                green: 'bg-green-500',
+                                blue: 'bg-blue-500',
+                                purple: 'bg-purple-500',
+                                yellow: 'bg-yellow-500',
+                                cyan: 'bg-cyan-500',
+                                pink: 'bg-pink-500',
+                                gray: 'bg-gray-500'
+                              };
+                              return (
+                              <tr key={idx} className="hover:bg-white/5 transition-colors">
                                 <td className="px-4 py-3">
                                     <div className="flex items-center">
-                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></div>
-                                        <span className="text-gray-200 text-xs font-mono">Article Gen</span>
+                                        <div className={`w-1.5 h-1.5 ${colorClasses[log.color] || 'bg-gray-500'} rounded-full mr-2`}></div>
+                                        <span className="text-gray-200 text-xs font-mono">{log.label}</span>
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 text-right text-xs text-gray-500">2m</td>
-                            </tr>
-                            <tr className="hover:bg-white/5 transition-colors">
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center">
-                                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>
-                                        <span className="text-gray-200 text-xs font-mono">SEO Update</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3 text-right text-xs text-gray-500">1h</td>
-                            </tr>
-                            <tr className="hover:bg-white/5 transition-colors">
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center">
-                                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2"></div>
-                                        <span className="text-gray-200 text-xs font-mono">Img Gen</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3 text-right text-xs text-gray-500">3h</td>
-                            </tr>
-                            <tr className="hover:bg-white/5 transition-colors">
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center">
-                                        <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-2"></div>
-                                        <span className="text-gray-200 text-xs font-mono">Login (Admin)</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3 text-right text-xs text-gray-500">5h</td>
-                            </tr>
+                                <td className="px-4 py-3 text-right text-xs text-gray-500">{log.timeAgo}</td>
+                              </tr>
+                            )})}
                         </tbody>
                     </table>
                 </div>
