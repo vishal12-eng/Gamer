@@ -36,6 +36,25 @@ interface Rss2JsonItem {
 }
 
 const feedMap: Partial<Record<Category, string[]>> = {
+  Technology: [
+    'https://www.theverge.com/rss/index.xml',
+    'https://techcrunch.com/feed/',
+    'https://news.ycombinator.com/rss'
+  ],
+  AI: [
+    'https://www.artificialintelligence-news.com/feed/',
+    'https://openai.com/blog/rss.xml',
+    'https://www.theverge.com/rss/index.xml'
+  ],
+  Product: [
+    'https://techcrunch.com/feed/',
+    'https://www.theverge.com/rss/index.xml',
+    'https://feeds.macrumors.com/MacRumors-Front'
+  ],
+  Business: [
+    'https://feeds.bloomberg.com/markets/news.rss',
+    'https://feeds.bloomberg.com/markets/fixed-income.rss'
+  ],
   Global: [
     'https://www.aljazeera.com/xml/rss/all.xml',
     'http://feeds.bbci.co.uk/news/world/rss.xml'
@@ -43,15 +62,6 @@ const feedMap: Partial<Record<Category, string[]>> = {
   Entertainment: [
     'https://www.hindustantimes.com/feeds/rss/entertainment/rssfeed.xml',
     'https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms'
-  ],
-  Product: [
-    'https://techcrunch.com/feed/',
-    'https://www.theverge.com/rss/index.xml',
-    'https://gadgets360.com/rss/feeds'
-  ],
-  Business: [
-    'https://www.livemint.com/rss/business',
-    'http://feeds.reuters.com/reuters/businessNews'
   ],
   Science: [
     'https://www.sciencedaily.com/rss/all.xml',
@@ -62,8 +72,8 @@ const feedMap: Partial<Record<Category, string[]>> = {
     'https://www.thehindu.com/news/national/feeder/default.rss'
   ],
   US: [
-    'http://feeds.reuters.com/Reuters/domesticNews',
-    'https://feeds.a.dj.com/rss/RSSWSJD.xml'
+    'https://feeds.bloomberg.com/markets/news.rss',
+    'https://feeds.apnews.com/apnews/rss/news'
   ]
 };
 
@@ -181,6 +191,7 @@ export const ArticleProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const fetchFromRss = useCallback(async (): Promise<Article[]> => {
     try {
+      const categoryArticleCounts: Record<string, number> = {};
       const feedPromises = Object.entries(feedMap)
         .flatMap(([category, urls]) =>
           (urls ?? []).map(url =>
@@ -191,12 +202,16 @@ export const ArticleProvider: React.FC<{ children: ReactNode }> = ({ children })
               })
               .then(data => {
                 if (data.status !== 'ok' || !data.items) {
+                  console.log(`[useArticles] ${category} feed (${url}): 0 items`);
                   return [];
                 }
+                const itemCount = data.items.length;
+                categoryArticleCounts[category] = (categoryArticleCounts[category] || 0) + itemCount;
+                console.log(`[useArticles] ${category} feed (${url}): ${itemCount} items`);
                 return data.items.map((item: Rss2JsonItem) => ({ item, category: category as Category }));
               })
               .catch(err => {
-                console.warn(`RSS Fetch failed for ${url}`, err);
+                console.warn(`RSS Fetch failed for ${url} (${category}):`, err.message);
                 return [];
               })
           )
@@ -208,12 +223,15 @@ export const ArticleProvider: React.FC<{ children: ReactNode }> = ({ children })
         .filter(result => result.status === 'fulfilled' && Array.isArray(result.value))
         .flatMap(result => (result as PromiseFulfilledResult<any[]>).value);
       
+      console.log(`[useArticles] Category Summary: ${Object.entries(categoryArticleCounts).map(([cat, count]) => `${cat}: ${count}`).join(', ')}`);
+      
       if (allItemsWithCategory.length === 0) {
+        console.warn('[useArticles] No RSS items fetched from any feed');
         return [];
       }
 
       const parsed = await parseRssArticles(allItemsWithCategory);
-      console.log(`[useArticles] Fetched ${parsed.length} articles from RSS`);
+      console.log(`[useArticles] Parsed ${parsed.length} articles from RSS (categories: ${Object.entries(categoryArticleCounts).map(([cat, count]) => `${cat}=${count}`).join(', ')})`);
       return parsed;
     } catch (e) {
       console.error('[useArticles] RSS fetch failed:', e);
