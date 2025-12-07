@@ -39,6 +39,8 @@ import { getCategoryIcon } from '../utils/getCategoryIcon';
 import Feedback from '../components/Feedback';
 import SEO from '../components/SEO';
 import AdBanner from '../components/AdBanner';
+import StickySidebarAd from '../components/StickySidebarAd';
+import InArticleAdInjector from '../components/InArticleAdInjector';
 
 // Web Speech API is used for TTS - no external dependencies needed
 
@@ -672,6 +674,7 @@ const ArticlePage: React.FC = () => {
       />
       <ReadingProgressBar targetRef={articleContentRef} />
       <FloatingAIToolbar handlers={handlers} state={state} />
+      <StickySidebarAd />
 
       <article className="max-w-4xl mx-auto" ref={articleContentRef} itemScope itemType="http://schema.org/NewsArticle">
         <header className="mb-8">
@@ -830,9 +833,13 @@ const ArticlePage: React.FC = () => {
           <div className="flex-1">
             <div
               itemProp="articleBody"
-              className={`prose prose-lg dark:prose-invert max-w-none ${isExpanding || isImprovingReadability ? 'typing-cursor' : ''}`}
-              dangerouslySetInnerHTML={{ __html: translatedContent || improvedContent || expandedContent || article.content }}
-            />
+              className={`${isExpanding || isImprovingReadability ? 'typing-cursor' : ''}`}
+            >
+              <InArticleAdInjector 
+                content={translatedContent || improvedContent || expandedContent || article.content}
+                showAds={!isExpanding && !isImprovingReadability}
+              />
+            </div>
           </div>
         </div>
 

@@ -430,6 +430,211 @@ app.post('/api/mailchimpSubscribe', async (req, res) => {
 });
 
 // =============================================
+// NEWSLETTER HANDLERS
+// =============================================
+
+app.post('/api/newsletter/generate-summary', async (req, res) => {
+  try {
+    let apiKey = process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Server configuration error: Missing AI API Key' });
+    }
+
+    apiKey = apiKey.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '').trim();
+
+    const { articles } = req.body;
+
+    if (!articles || !Array.isArray(articles) || articles.length === 0) {
+      return res.status(400).json({ error: 'Articles array is required' });
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+
+    const articlesList = articles.map((article, index) => 
+      `${index + 1}. "${article.title}" - ${article.summary}`
+    ).join('\n');
+
+    const prompt = `You are a tech newsletter writer for FutureTechJournal. Create an engaging email newsletter digest based on these articles:
+
+${articlesList}
+
+Generate:
+1. A catchy email subject line (max 60 characters) that will get people to open the email
+2. Newsletter content in HTML format that:
+   - Has a brief greeting
+   - Summarizes each article engagingly (2-3 sentences each)
+   - Includes a call-to-action to read more on the website
+   - Has a friendly sign-off
+   - Uses simple inline styles for formatting (colors: #06b6d4 for cyan accents)
+
+Respond in this exact JSON format:
+{
+  "subject": "your subject line here",
+  "content": "your HTML content here"
+}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 2000,
+      },
+    });
+
+    let responseText = response.text || '';
+    
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('[Newsletter] AI summary generated successfully');
+      return res.json({
+        subject: parsed.subject,
+        content: parsed.content,
+      });
+    }
+
+    return res.status(500).json({ error: 'Failed to parse AI response' });
+  } catch (error) {
+    console.error('[Newsletter] Generate summary error:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate newsletter summary' });
+  }
+});
+
+app.post('/api/newsletter/send', authenticateToken, async (req, res) => {
+  try {
+    const { subject, content } = req.body;
+
+    if (!subject || !content) {
+      return res.status(400).json({ success: false, message: 'Subject and content are required' });
+    }
+
+    const apiKey = process.env.MAILCHIMP_API_KEY;
+    const listId = process.env.MAILCHIMP_LIST_ID;
+
+    if (!apiKey || !listId) {
+      console.error('[Newsletter] Missing Mailchimp configuration');
+      return res.status(500).json({ success: false, message: 'Server configuration error: Missing Mailchimp credentials' });
+    }
+
+    const apiServer = apiKey.split('-')[1];
+    const baseUrl = `https://${apiServer}.api.mailchimp.com/3.0`;
+    const authHeader = `Basic ${Buffer.from(`anystring:${apiKey}`).toString('base64')}`;
+
+    const campaignResponse = await fetch(`${baseUrl}/campaigns`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'regular',
+        recipients: {
+          list_id: listId,
+        },
+        settings: {
+          subject_line: subject,
+          title: `Newsletter - ${new Date().toLocaleDateString()}`,
+          from_name: 'FutureTechJournal',
+          reply_to: process.env.MAILCHIMP_REPLY_TO || 'newsletter@futuretechjournal.com',
+        },
+      }),
+    });
+
+    const campaignData = await campaignResponse.json();
+
+    if (!campaignResponse.ok) {
+      console.error('[Newsletter] Failed to create campaign:', campaignData);
+      return res.status(campaignResponse.status).json({ 
+        success: false, 
+        message: campaignData.detail || 'Failed to create campaign' 
+      });
+    }
+
+    const campaignId = campaignData.id;
+    console.log(`[Newsletter] Campaign created: ${campaignId}`);
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #111827; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #1f2937; color: #e5e7eb;">
+    <div style="padding: 32px; text-align: center; background: linear-gradient(135deg, #0e7490, #7c3aed);">
+      <h1 style="margin: 0; color: white; font-size: 28px;">FutureTechJournal</h1>
+      <p style="margin: 8px 0 0; color: #e0f2fe; font-size: 14px;">Your Weekly Tech Digest</p>
+    </div>
+    <div style="padding: 32px;">
+      ${content}
+    </div>
+    <div style="padding: 24px; text-align: center; border-top: 1px solid #374151;">
+      <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+        © ${new Date().getFullYear()} FutureTechJournal. All rights reserved.
+      </p>
+      <p style="margin: 8px 0 0; color: #6b7280; font-size: 11px;">
+        <a href="*|UNSUB|*" style="color: #06b6d4;">Unsubscribe</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const contentResponse = await fetch(`${baseUrl}/campaigns/${campaignId}/content`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        html: htmlContent,
+      }),
+    });
+
+    if (!contentResponse.ok) {
+      const contentError = await contentResponse.json();
+      console.error('[Newsletter] Failed to set content:', contentError);
+      return res.status(contentResponse.status).json({ 
+        success: false, 
+        message: contentError.detail || 'Failed to set campaign content' 
+      });
+    }
+
+    console.log(`[Newsletter] Campaign content set for: ${campaignId}`);
+
+    const sendResponse = await fetch(`${baseUrl}/campaigns/${campaignId}/actions/send`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!sendResponse.ok) {
+      const sendError = await sendResponse.json();
+      console.error('[Newsletter] Failed to send campaign:', sendError);
+      return res.status(sendResponse.status).json({ 
+        success: false, 
+        message: sendError.detail || 'Failed to send campaign' 
+      });
+    }
+
+    console.log(`[Newsletter] Campaign sent successfully: ${campaignId}`);
+    res.json({ 
+      success: true, 
+      message: 'Newsletter sent successfully!',
+      campaignId 
+    });
+
+  } catch (error) {
+    console.error('[Newsletter] Send error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to send newsletter' });
+  }
+});
+
+// =============================================
 // EXPANDED ARTICLES (File-based fallback + MongoDB)
 // =============================================
 const EXPANDED_ARTICLES_FILE = path.join(__dirname, 'expanded_articles.json');

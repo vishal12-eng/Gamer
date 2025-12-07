@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import ArticleCard from '../components/ArticleCard';
 import TrendingTicker from '../components/TrendingTicker';
+import TrendingSection from '../components/TrendingSection';
+import NewsletterForm from '../components/NewsletterForm';
+import EditorsChoice from '../components/EditorsChoice';
+import PopularSection from '../components/PopularSection';
+import InfiniteScrollFeed from '../components/InfiniteScrollFeed';
 import SparklesIcon from '../components/icons/SparklesIcon';
-import Pagination from '../components/Pagination';
 import { getCategoryStyle } from '../utils/categoryStyles';
 import { Category } from '../types';
 import { useArticles } from '../hooks/useArticles';
@@ -14,11 +17,8 @@ import { generateOrganizationSchema, generateWebsiteSchema } from '../utils/seoH
 import { getPageSEO } from '../utils/seoConfig';
 import AdBanner, { StickyBottomBanner } from '../components/AdBanner';
 
-const ARTICLES_PER_PAGE = 6;
-
 const HomePage: React.FC = () => {
   const { articles, loading, error } = useArticles();
-  const [currentPage, setCurrentPage] = useState(1);
   const [heroImageLoaded, setHeroImageLoaded] = useState(false);
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const heroRef = useRef<HTMLElement>(null);
@@ -61,19 +61,6 @@ const HomePage: React.FC = () => {
   const heroArticle = articles[0];
   const otherArticles = articles.slice(1);
   const { text: heroText } = getCategoryStyle(heroArticle.category as Category);
-
-  const totalPages = Math.ceil(otherArticles.length / ARTICLES_PER_PAGE);
-  const startIndex = (currentPage - 1) * ARTICLES_PER_PAGE;
-  const endIndex = startIndex + ARTICLES_PER_PAGE;
-  const currentArticles = otherArticles.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    const section = document.getElementById('latest-articles');
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const websiteSchema = generateWebsiteSchema();
   const orgSchema = generateOrganizationSchema();
@@ -190,7 +177,7 @@ const HomePage: React.FC = () => {
           {/* Scroll indicator */}
           <div 
             className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-            onClick={() => document.getElementById('latest-articles')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => document.getElementById('trending-section')?.scrollIntoView({ behavior: 'smooth' })}
             style={{ transitionDelay: '1000ms' }}
           >
             <span className="text-xs uppercase tracking-widest text-gray-400">Scroll</span>
@@ -207,7 +194,33 @@ const HomePage: React.FC = () => {
       {/* Trending Ticker */}
       <TrendingTicker articles={articles} />
 
-      {/* Latest Articles Section with scroll reveal */}
+      {/* Trending Section - Top 5 articles horizontal slider */}
+      <section id="trending-section">
+        <TrendingSection articles={articles} />
+      </section>
+
+      {/* Ad Banner - After Trending */}
+      <AdBanner placement="home_after_card_3" />
+
+      {/* Newsletter Signup Section */}
+      <section>
+        <NewsletterForm />
+      </section>
+
+      {/* Editor's Choice Section - 4 expanded/featured articles */}
+      <section>
+        <EditorsChoice articles={articles} />
+      </section>
+
+      {/* Popular Section - 10 articles ranked by date */}
+      <section>
+        <PopularSection articles={articles} />
+      </section>
+
+      {/* Ad Banner - Home Middle */}
+      <AdBanner placement="home_middle" />
+
+      {/* Infinite Scroll Feed - Latest Articles */}
       <section id="latest-articles" ref={articlesRef}>
         <div 
           className={`flex items-center mb-10 transition-all duration-700 ease-out ${
@@ -224,38 +237,11 @@ const HomePage: React.FC = () => {
           <div className="ml-4 flex-grow h-px bg-gradient-to-r from-cyan-500/50 via-purple-500/30 to-transparent"></div>
         </div>
 
-        {/* Articles Grid with staggered reveal */}
-        <div 
-          className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-700 ${
-            articlesVisible ? 'opacity-100' : 'opacity-100'
-          }`}
-        >
-          {currentArticles.map((article, index) => (
-            <React.Fragment key={article.slug}>
-              <ArticleCard article={article} index={index} />
-              {index === 2 && currentArticles.length > 3 && (
-                <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                  <AdBanner placement="home_after_card_3" />
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {/* Pagination */}
-        <div className="mt-12">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
+        {/* Infinite Scroll Feed - replaces pagination */}
+        <InfiniteScrollFeed articles={otherArticles} loading={loading} />
 
         {/* Ad Banner - Above Footer */}
         <AdBanner placement="footer" className="mt-12" />
-        
-        {/* Ad Banner - Home Middle */}
-        <AdBanner placement="home_middle" className="mt-8" />
       </section>
 
       {/* Mobile Sticky Bottom Banner */}

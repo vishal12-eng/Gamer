@@ -35,6 +35,7 @@ const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminArticleListPage = lazy(() => import('./pages/AdminArticleListPage'));
 const AdminArticleEditorPage = lazy(() => import('./pages/AdminArticleEditorPage'));
 const AdminAdsPage = lazy(() => import('./pages/AdminAdsPage'));
+const AdminNewsletterPage = lazy(() => import('./pages/AdminNewsletterPage'));
 
 function App() {
   const [toastMessage, setToastMessage] = useState('');
@@ -112,6 +113,14 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <AdminAdsPage />
+                              </ProtectedRoute>
+                            } 
+                          />
+                          <Route 
+                            path="/admin/newsletter" 
+                            element={
+                              <ProtectedRoute>
+                                <AdminNewsletterPage />
                               </ProtectedRoute>
                             } 
                           />
