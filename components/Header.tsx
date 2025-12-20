@@ -146,7 +146,8 @@ const Header: React.FC = () => {
           <div className={`flex-shrink-0 transition-transform duration-300 ${logoScale}`}>
             <Link 
               to="/" 
-              className="flex items-center space-x-2 text-2xl font-bold text-blue-900 dark:text-white group"
+              className="flex items-center space-x-2 text-2xl font-bold dark:text-white group" 
+              style={{ color: 'var(--primary)' }}
             >
               <div className="relative">
                 <LogoIcon className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" />
