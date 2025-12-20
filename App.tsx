@@ -56,7 +56,7 @@ function App() {
             <ArticleProvider>
               <HashRouter>
               <ScrollToTop>
-                <div className="flex flex-col min-h-screen font-sans transition-colors duration-500" style={{ backgroundColor: 'var(--bg-page)' }}>
+                <div className="flex flex-col min-h-screen font-sans bg-white dark:bg-gray-950 transition-colors duration-500">
                   <Header />
                   <main className="flex-grow container mx-auto px-4 py-8 pt-24">
                     <ErrorBoundary>

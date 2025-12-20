@@ -83,10 +83,9 @@ const Footer: React.FC = () => {
           to={to} 
           className={`group block text-sm transition-all duration-300 py-1 ${
             isActive 
-              ? 'font-semibold' 
+              ? 'text-cyan-400 font-semibold' 
               : 'text-gray-400 hover:text-cyan-400'
           }`}
-          style={isActive ? { color: 'var(--accent)' } : {}}
         >
           <span className="relative">
             {text}
@@ -102,8 +101,7 @@ const Footer: React.FC = () => {
   return (
     <footer 
       ref={footerRef}
-      className="relative text-gray-400 w-full overflow-hidden" 
-      style={{ backgroundColor: 'var(--bg-page-dark)' }}
+      className="relative bg-gray-900 dark:bg-black/90 text-gray-400 w-full overflow-hidden"
     >
       {/* Animated gradient border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent"></div>
