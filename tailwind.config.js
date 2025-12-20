@@ -9,8 +9,27 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
+        // Light mode colors
+        light: {
+          bg: '#f8f9fa',
+          'bg-secondary': '#ffffff',
+          'text-primary': '#1a1a1a',
+          'text-secondary': '#4a4a4a',
+          accent: 'rgb(59, 130, 246)',
+          'accent-light': 'rgb(191, 219, 254)',
+        },
+        // Dark mode colors
+        dark: {
+          bg: '#0f0f0f',
+          'bg-secondary': '#1a1a1a',
+          'text-primary': '#f5f5f5',
+          'text-secondary': '#b0b0b0',
+          accent: 'rgb(34, 211, 238)',
+          'accent-light': 'rgb(56, 189, 248)',
+        },
         cyan: {
           50: '#ecfeff',
           100: '#cffafe',
@@ -37,6 +56,14 @@ module.exports = {
           900: '#581c87',
           950: '#3b0764',
         },
+      },
+      textColor: {
+        primary: 'var(--color-text-primary)',
+        secondary: 'var(--color-text-secondary)',
+      },
+      backgroundColor: {
+        base: 'var(--color-bg-base)',
+        secondary: 'var(--color-bg-secondary)',
       },
       keyframes: {
         'ticker-scroll': {

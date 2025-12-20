@@ -1,219 +1,269 @@
-# FutureTech Journal - Replit Setup
+# FutureTechJournal - Design System Implementation Guide
 
-## Overview
-FutureTech Journal is an ultra-modern, AI-powered news and blog website built with React, TypeScript, Vite, and Tailwind CSS. It leverages Google's Gemini API for advanced AI capabilities like content generation, summarization, and translation. The project aims to provide a rich, responsive, and SEO-optimized platform for dynamic content delivery, featuring an advanced article expansion system, robust ad management, and seamless user experience with modern UI/UX designs.
+## Project Overview
+FutureTechJournal is a premium, AI-powered tech news platform with:
+- RSS feed ingestion for multi-source news
+- AI-powered content expansion using Google Gemini
+- Admin dashboard for article management
+- Ad management system
+- Cookie consent & newsletter signup
+- Dark/Light mode theme system
 
-## User Preferences
-- I prefer simple language and clear explanations.
-- I want iterative development with frequent, small updates.
-- Ask before making major architectural changes or introducing new libraries.
-- I prefer detailed explanations for complex features or decisions.
-- Do not make changes to the `netlify/functions` directory without explicit instruction.
-- Do not modify the `vite.config.ts` or `netlify.toml` files unless absolutely necessary for core functionality or explicitly requested.
+## Phase 1: Foundation ✅ COMPLETE
+**Status:** Complete
+- ✅ Dark/Light mode infrastructure (ThemeProvider, ThemeToggle, useTheme hook)
+- ✅ Theme toggle in Header (instant switching, no page reload)
+- ✅ Tailwind dark mode configured with CSS classes
+- ✅ Color system defined:
+  - **Light Mode:** Soft white (#f8f9fa), text #1a1a1a, accent blue
+  - **Dark Mode:** Deep navy (#0f0f0f), text #f5f5f5, accent cyan
+- ✅ Typography: Inter sans-serif with heading hierarchy
+- ✅ Animations and transitions configured in Tailwind
 
-## System Architecture
-The project is built with React 18, TypeScript, and Vite for a fast and type-safe frontend. Tailwind CSS 4.x with PostCSS is used for highly optimized and responsive styling, featuring Glassmorphism design, advanced animations (fadeIn, shimmer, pulse-glow), scroll reveal, and image blur-up loading. React Router v6 handles client-side routing.
+**Key Files:**
+- `/hooks/useTheme.tsx` - Theme context and provider
+- `/components/ThemeToggle.tsx` - Theme toggle button
+- `/components/Header.tsx` - Contains theme toggle
+- `/tailwind.config.js` - Extended with color system
 
-AI capabilities are powered by the Google Gemini API, accessed securely via the backend Express server. Content is SEO-optimized with an automated article expansion system generating 800-1500+ word articles with hierarchical headings, meta tags, LSI keywords, and JSON-LD schema.
+---
 
-### Backend Architecture
-The Express server (`server/index.cjs`) runs on port 3001 and provides:
-- AI Handler API (Gemini integration)
-- Pixabay Image API
-- Mailchimp Newsletter API
-- MongoDB-backed REST APIs for articles, categories, ads, and authentication
-- Expanded articles storage (MongoDB with file-based fallback)
+## Phase 2: Header & Navigation Redesign 🔄 PENDING
+**Scope:**
+- [ ] Sticky navbar with glass-morphism effect
+- [ ] Logo + Brand on left
+- [ ] Navigation categories (centered): Home, Technology, AI, Business, Global, Product, Entertainment, Science, India, US
+- [ ] Right side: Search + Theme toggle + Login button
+- [ ] Mobile menu: Slide-down animation, thumb-friendly
+- [ ] Hover effects: Underline animation on nav items
+- [ ] Active link highlighting with category colors
+- [ ] Search dropdown with article suggestions
 
-### Database Integration (MongoDB Atlas)
-The project supports MongoDB Atlas as an optional database backend with automatic fallback to localStorage/file-based storage when not configured.
+**Components to Update:**
+- `Header.tsx` - Full redesign with new layout
+- `ThemeToggle.tsx` - Polish styling to match design system
 
-**Database Models** (`src/models/`):
-- `Article.cjs` - Articles with SEO metadata, expanded content, and view tracking
-- `Category.cjs` - Categories with article counts and metadata
-- `Ad.cjs` - Ads with placement, status, and analytics tracking
-- `User.cjs` - Users with authentication and role-based access
+---
 
-**API Endpoints**:
-- `GET/POST/PUT/DELETE /api/articles` - Article CRUD operations
-- `GET /api/articles/:slug` - Get single article with view tracking
-- `GET /api/articles/:slug/faqs` - Get FAQs for an article
-- `POST /api/articles/:slug/faqs/refresh` - Regenerate FAQs with AI (Admin only)
-- `GET/POST /api/categories` - Category operations
-- `GET /api/categories/:slug` - Get category with articles
-- `GET/POST/PUT/DELETE /api/ads` - Ad management
-- `GET /api/ads/placement/:placement` - Get active ads for placement
-- `POST /api/auth/login` - User authentication
-- `GET /api/auth/verify` - Token verification
-- `GET /api/db/status` - Database connection status
+## Phase 3: Homepage Redesign 🔄 PENDING
+**Sections:**
+1. **Hero Section** - One large featured article card
+   - Large image with gradient overlay
+   - Category badge
+   - Bold headline
+   - Metadata (author, date, read time)
 
-### Frontend State Management
-- `context/AdsContext.tsx` - Ad management with MongoDB API + localStorage fallback
-- `hooks/useArticles.tsx` - Article fetching from MongoDB → RSS feeds → mock data
-- Automatic sync between MongoDB and localStorage for offline support
+2. **Trending Ticker** - Horizontal scroll animation
+   - Minimal cards, headline-only
+   - FOMO-inducing animation
 
-The system includes:
-- **UI/UX**: Glassmorphism design, advanced animations (fadeIn, fadeInUp, scaleIn, shimmer, pulse-glow, float, gradient-shift), scroll reveal, enhanced header with shrinking and animated gradient, animated hero section, interactive article cards, skeleton loading, image blur-up, toast notifications, and micro-interactions.
-- **Key Features**: AI-powered content (summarization, translation, text-to-speech, image generation), SEO Article Expansion System, article management, bookmarks, full-text search with AI recommendations, responsive design, dark mode, and comprehensive SEO optimization (sitemap, robots.txt, meta tags, JSON-LD).
-- **Technical Implementations**: Custom React hooks, React Context for state management (e.g., AuthContext, AdsContext), utility functions, and serverless functions for backend logic. Performance is optimized through code splitting, lazy loading, optimized assets, Tailwind CSS tree-shaking, and lazy-loaded ad iframes. An `ErrorBoundary` component ensures robust error handling, and `useLayoutEffect` addresses hydration mismatches for theme consistency.
-- **Dynamic Ads Manager**: An admin dashboard (at `/admin/ads`) allows managing unlimited SmartLinks from A-ADS with placement-based rotation, supporting various ad placements across the site (homepage, article pages, category pages, mobile sticky). Ads rotate every 10 seconds and pause on hover for improved UX.
-- **SEO System**: Centralized configuration (`utils/seoConfig.ts`), SEO engine (`utils/seoEngine.ts`) for title generation, meta descriptions, keyword extraction, and schema building, SEO helpers (`utils/seoHelpers.ts`) for JSON-LD schema, and a universal `SEO` component (`components/SEO.tsx`) for meta tags, Open Graph, Twitter Cards, and JSON-LD. Sitemap.xml and robots.txt are auto-generated during the build process.
+3. **Editor's Choice** - 2x2 Grid
+   - Premium styled cards
+   - Hover scale effect
+   - "Trending" badges
 
-## Environment Variables
+4. **Popular This Week** - Vertical compact list
+   - Read count + time indicator
+   - Social proof styling
 
-### Required for Full Functionality
-```
-GOOGLE_AI_API_KEY     - Google Gemini API key for AI features
-PIXABAY_API_KEY       - Pixabay API key for article images
-```
+5. **Latest Feed** - Grid of article cards
+   - Equal spacing
+   - Pagination (controlled UX, no infinite scroll)
+   - Clean card design with hover effects
 
-### Optional (Database)
-```
-MONGODB_URI           - MongoDB Atlas connection string
-                        Format: mongodb+srv://user:password@cluster.mongodb.net/dbname
-JWT_SECRET            - Secret for JWT token signing (defaults to fallback if not set)
-```
+**Components to Create/Update:**
+- `pages/HomePage.tsx` - Full redesign
+- `components/HeroCard.tsx` - Featured article component
+- `components/ArticleCard.tsx` - Enhanced card with hover effects
+- `components/TrendingTicker.tsx` - Horizontal scrolling ticker
 
-### Optional (Other Services)
-```
-MAILCHIMP_API_KEY     - Mailchimp API key for newsletter
-MAILCHIMP_LIST_ID     - Mailchimp audience list ID
-```
+---
 
-### MongoDB Atlas Setup
-1. Create a free cluster at https://cloud.mongodb.com
-2. Create a database user with read/write permissions
-3. Whitelist IP addresses (0.0.0.0/0 for development)
-4. Get connection string and add to MONGODB_URI
-5. The database will auto-create collections on first use
+## Phase 4: Article Page Redesign 🔄 PENDING
+**Features:**
+- [ ] Large readable title with proper hierarchy
+- [ ] Meta info: Date, Category, Author, Read time
+- [ ] Hero image with gradient
+- [ ] Clean article body with proper spacing
+- [ ] AI Article Expansion with typing animation (ChatGPT-style)
+- [ ] Article Toolkit sidebar:
+  - Summarize button
+  - Readability score display
+  - Text-to-speech button
+- [ ] Related Articles at bottom (same category)
+- [ ] Share buttons
+- [ ] Bookmark functionality
 
-### Fallback Behavior
-- Without MONGODB_URI: Uses localStorage for ads, RSS feeds for articles, file storage for expanded articles
-- All existing functionality works without MongoDB
-- MongoDB adds persistence, analytics, and admin features
+**Components:**
+- `pages/ArticlePage.tsx` - Full redesign
+- `components/ArticleBody.tsx` - Article content renderer
+- `components/RelatedArticles.tsx` - Related articles section
+- `components/ArticleToolkit.tsx` - Sidebar tools
 
-## External Dependencies
-- **AI API**: Google Gemini API (via Express backend)
-- **Advertising**: A-ADS (Anonymous Ads)
-- **Image Service**: Pixabay API (via Express backend)
-- **Newsletter**: Mailchimp API (via Express backend)
-- **Database**: MongoDB Atlas (optional, with automatic fallback)
-- **Deployment**: Hostinger/Netlify compatible (static build with API proxy)
+---
 
-## Recent Changes
-- **December 7, 2025**: AI Quota Fix - Disabled frontend-triggered article expansion:
-  - Article expansion now happens ONLY during backend RSS ingestion (controlled by admin)
-  - Frontend `expandArticleWithSEO` function returns blocked error message
-  - `ArticlePage.tsx` now only loads pre-expanded content from DB (read-only)
-  - Added admin endpoints: `POST /api/admin/rss-ingest`, `GET /api/admin/rss-ingest/status`, `GET /api/admin/rss-preview`
-  - Backend has safeguards: checks `isExpanded` flag and content length before AI calls
-  - Existing AI features (summarize, translate, TTS) still work on-demand
-- **December 6, 2025**: Fixed Theme Toggle System - Dark/Light mode now works correctly:
-  - Root cause: Tailwind CSS 4.x with `@import "tailwindcss"` was not loading `tailwind.config.js`
-  - Fix: Added `@config "./tailwind.config.js";` to `index.css` to enable `darkMode: 'class'`
-  - Theme applies on `<html>` element, toggles instantly, persists to localStorage
-- **December 6, 2025**: Fixed Article Loading System - RSS articles now prioritized over MongoDB:
-  - Rewrote `refreshArticles()` in `hooks/useArticles.tsx`
-  - Order: RSS (sorted by date) → MongoDB (supplementary) → Mock (fallback)
-  - Hero article always comes from RSS (newest)
-- **December 6, 2025**: Implemented Featured Snippet + FAQ System with:
-  - FAQ API routes (GET /api/articles/:slug/faqs, POST /api/articles/:slug/faqs/refresh)
-  - FAQItem.tsx and FAQSection.tsx UI components with accordion animation
-  - JSON-LD FAQPage schema in SEO.tsx for search engine structured data
-  - Admin FAQ Manager in AdminArticleEditorPage with view/add/delete/refresh controls
-  - Auto-generated FAQs during article expansion using Gemini AI
-- **December 5, 2025**: Fixed LSP errors in AdminAdsPage.tsx (type conversion for sorting) and geminiService.ts (unused parameters)
-- **December 5, 2025**: Removed duplicate files (ThemeToggle, TagIcon, TechnologyIcon, TranslateIcon) - kept only properly organized ones
-- **December 5, 2025**: Security fix - removed exposed malformed MONGODB_URI, moved to secrets
-- **December 5, 2025**: Created .env.example template with URL-encoding guidance
-- **December 5, 2025**: Verified Article Auto-Cleanup System (48-hour expiry, 24-hour scheduler) is production-ready
-- **December 2025**: Added MongoDB Atlas integration with Mongoose models
-- **December 2025**: Updated AdsContext and useArticles hooks for MongoDB support
-- **December 2025**: Added authentication API with JWT tokens
-- **December 2025**: Created comprehensive REST API for articles, categories, ads
+## Phase 5: Category Pages Redesign 🔄 PENDING
+**Features:**
+- [ ] Category title with icon
+- [ ] Breadcrumb navigation
+- [ ] Active category highlighted in header
+- [ ] Grid layout of articles
+- [ ] Pagination (not infinite scroll)
+- [ ] Filter/sort options
 
-## Article Auto-Cleanup System
+**Components:**
+- `pages/CategoryPage.tsx` - Redesign with category styling
 
-### Overview
-The system automatically deletes articles older than 48 hours to keep the database lightweight and prevent free-tier overflow issues.
+---
 
-### How It Works
-- **Expiry Time**: 48 hours (48 * 60 * 60 * 1000 ms)
-- **Scheduler**: Runs every 24 hours automatically
-- **Delete Query**: `deleteMany({ createdAt: { $lt: new Date(Date.now() - 48*60*60*1000) } })`
-- **Protected Collections**: Only Articles are deleted. Categories, Ads, Users, AI config, SEO metadata, sitemap cache, and logs are NOT touched.
+## Phase 6: Ads System Styling 🔄 PENDING
+**Philosophy:** Premium ads, not spam-looking
+- [ ] Placement: Home (after hero, mid-sections), Articles (after para 3, 6, bottom)
+- [ ] Mobile: Sticky bottom (closeable), non-intrusive
+- [ ] Animations: Fade-in, hover lift, smooth rotation
+- [ ] Ad-unit styling with subtle gradients
+- [ ] Ads look like premium banners
+- [ ] No popups, no redirects, no spam appearance
 
-### API Endpoints
-- `GET /api/cron/cleanup` - Public endpoint for external schedulers (Hostinger, Netlify)
-- `POST /api/cron/cleanup` - Admin-only endpoint with detailed response
+**Components:**
+- `components/AdUnit.tsx` - Premium styled ad component
+- Update ad placement in homepage and article pages
 
-### Hostinger Cron Job Setup
-1. Go to Hostinger hPanel > Cron Jobs
-2. Add new cron job:
-   - Command: `curl -s https://yourdomain.com/api/cron/cleanup`
-   - Schedule: Every 24 hours (0 0 * * *)
+---
 
-### Netlify Scheduled Function Setup
-Create `netlify/functions/cleanup-scheduler.js`:
-```javascript
-const { schedule } = require('@netlify/functions');
+## Phase 7: Card Component Library 🔄 PENDING
+**Standardized Cards:**
+- [ ] ArticleCard - Base card with image, title, summary, meta
+- [ ] MinimalCard - Headline-only for ticker
+- [ ] HeroCard - Large featured article card
+- [ ] TrendingCard - Compact trending badge style
+- [ ] AdCard - Premium banner styling
 
-module.exports.handler = schedule('0 0 * * *', async () => {
-  await fetch('https://yourdomain.com/api/cron/cleanup');
-  return { statusCode: 200 };
-});
-```
+**Design Details:**
+- Hover: Scale 1.05 with shadow elevation
+- All cards: Smooth transition (300ms)
+- Borders: Subtle gradient borders in dark mode
+- Images: Proper aspect ratios, lazy loading
 
-## Project Structure
-```
-/
-├── server/
-│   └── index.cjs           # Express backend with all APIs
-├── src/
-│   ├── lib/
-│   │   └── db.cjs          # MongoDB connection utility
-│   └── models/
-│       ├── Article.cjs     # Article schema (includes faq field)
-│       ├── Category.cjs    # Category schema
-│       ├── Ad.cjs          # Ad schema
-│       ├── User.cjs        # User schema
-│       └── index.cjs       # Model exports
-├── components/
-│   ├── FAQItem.tsx         # FAQ accordion item component
-│   ├── FAQSection.tsx      # FAQ section container
-│   ├── SEO.tsx             # SEO component with JSON-LD support
-│   └── ...                 # Other UI components
-├── pages/
-│   ├── ArticlePage.tsx     # Article page with FAQ section
-│   ├── AdminArticleEditorPage.tsx  # Admin editor with FAQ Manager
-│   └── ...                 # Other pages
-├── context/
-│   └── AdsContext.tsx      # Ad state management
-├── hooks/
-│   └── useArticles.tsx     # Article fetching hook
-├── services/
-│   └── articleExpansionService.ts  # AI article expansion with FAQ generation
-├── types.ts                # TypeScript type definitions (includes FAQItem)
-└── package.json
-```
+---
 
-## FAQ System
+## Phase 8: Mobile Responsiveness 🔄 PENDING
+- [ ] Responsive navbar with hamburger menu
+- [ ] Touch-friendly button sizing (min 44px)
+- [ ] Mobile card layouts (single column)
+- [ ] Sticky bottom navigation (optional)
+- [ ] Optimized ads placement for mobile
+- [ ] Test on iOS and Android
 
-### Overview
-The FAQ system automatically generates 3-5 FAQs for each article during AI expansion and displays them with proper JSON-LD structured data for search engine rich snippets.
+---
 
-### How It Works
-1. **Auto-Generation**: When an article is expanded via AI, FAQs are generated along with the content
-2. **Storage**: FAQs are stored in the Article model's `faq` array field in MongoDB
-3. **Display**: FAQs appear in an accordion UI on article pages after the main content
-4. **SEO**: FAQPage JSON-LD schema is injected into the page head when FAQs exist
+## Phase 9: Micro-interactions & Animations 🔄 PENDING
+**Global Effects:**
+- [ ] Card hover: Scale + shadow
+- [ ] Button ripple effect
+- [ ] Skeleton loaders (smooth shimmer)
+- [ ] Page transitions (fade + slide)
+- [ ] Smooth scroll behavior
+- [ ] Theme toggle animation (rotate icon)
 
-### Admin Controls
-Access the FAQ Manager in the Admin Article Editor sidebar:
-- **View FAQs**: See all existing FAQs for the article
-- **Refresh with AI**: Regenerate FAQs using Gemini AI
-- **Delete FAQ**: Remove individual FAQ items
-- **Add Manual FAQ**: Create custom FAQ entries
+**Tailwind Animations Already Available:**
+- fadeIn, fadeInUp, fadeInDown, fadeInLeft, fadeInRight
+- scaleIn, slideUp, shimmer
+- pulse-glow, float, ripple
+- gradient-shift, border-glow
 
-### API Endpoints
-- `GET /api/articles/:slug/faqs` - Returns FAQ array for an article
-- `POST /api/articles/:slug/faqs/refresh` - Regenerate FAQs (Admin only, requires JWT token)
+---
+
+## Phase 10: Admin Dashboard Polish 🔄 PENDING
+- [ ] Clean form layouts
+- [ ] Toggle controls for settings
+- [ ] Success/error message styling
+- [ ] Loading states
+- [ ] Confirmation dialogs
+
+---
+
+## Phase 11: Newsletter & Consent UI 🔄 PENDING
+- [ ] Cookie consent banner (minimize spam look)
+- [ ] Newsletter signup form (minimal, clean)
+- [ ] Email summary styling (AI-written content)
+
+---
+
+## Phase 12: SEO & Performance UX 🔄 PENDING
+- [ ] Meta tags for social sharing
+- [ ] Structured data (Schema.org)
+- [ ] Open Graph images
+- [ ] Core Web Vitals optimization
+- [ ] Image optimization with next-gen formats
+
+---
+
+## Current Architecture
+
+**Backend (Node.js + Express):**
+- Server: `server/index.cjs` (port 3001)
+- Production server: `server/production.cjs`
+- RSS Ingestion: `server/rssIngestionService.cjs`
+- API endpoints:
+  - `/api/aiHandler` - AI content generation
+  - `/api/articles` - Article management
+  - `/api/ads` - Ad management
+  - `/api/newsletter` - Newsletter signup
+
+**Frontend (React + Vite):**
+- Main app: `App.tsx`
+- Entry: `index.tsx`
+- Pages: `pages/` directory
+- Components: `components/` directory
+- Hooks: `hooks/` directory (useTheme, useArticles, useAuth, etc)
+- Context: `context/` directory (AuthContext, AdsContext)
+
+**Styling:**
+- Tailwind CSS for utility classes
+- Dark mode with `darkMode: 'class'` in Tailwind config
+- Custom animations and shadows already configured
+- CSS files for global styles
+
+---
+
+## Deployment Settings
+
+**Render Configuration:**
+- Build: `npm install && npm run build`
+- Start: `node server/production.cjs`
+- Environment: Production
+- Use CommonJS for Node files (`.cjs` extension)
+- Set required env vars:
+  - `GOOGLE_AI_API_KEY` - Google Gemini API key
+  - `PIXABAY_API_KEY` - (optional) For image search
+  - `MONGODB_URI` - (optional) MongoDB connection
+  - `JWT_SECRET` - Secret for auth tokens
+
+---
+
+## Next Steps (When Switching to Autonomous Mode)
+
+If you want faster implementation of all remaining phases, switch to Autonomous mode. This will allow:
+- Full architecture review and optimization
+- Comprehensive component redesign across entire site
+- Automated testing of all design changes
+- Mobile responsiveness testing
+- Performance optimization
+- Complete design system validation
+
+**To proceed with next phase in Fast mode:**
+1. Choose one phase (e.g., Phase 2: Header & Navigation)
+2. Provide Phase 2 specific requirements if needed
+3. Implementation will be done within turn limit
+
+---
+
+## Notes for Developers
+- All color variables should respect dark/light mode via CSS classes
+- Animations should be hardware-accelerated (use transform, opacity)
+- Mobile-first approach for responsive design
+- Performance: Prioritize Core Web Vitals
+- Accessibility: ARIA labels, keyboard navigation
+- No breaking changes to existing features
+
