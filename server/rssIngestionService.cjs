@@ -1,4 +1,4 @@
-const { GoogleGenAI } = require('@google/genai');
+let GoogleGenAI = null;
 
 const RSS2JSON_API_URL = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
@@ -214,6 +214,12 @@ Return a VALID JSON object with this EXACT structure:
 Generate the SEO-optimized article now in valid JSON format:`;
 
   try {
+    // Lazy load GoogleGenAI
+    if (!GoogleGenAI) {
+      const module = await import('@google/genai');
+      GoogleGenAI = module.GoogleGenAI;
+    }
+    
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',

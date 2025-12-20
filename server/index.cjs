@@ -4,8 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { GoogleGenAI } = require('@google/genai');
 const { processAndSaveArticles, fetchRssFeeds, feedMap } = require('./rssIngestionService.cjs');
+let GoogleGenAI = null;
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -144,6 +144,13 @@ app.post('/api/aiHandler', async (req, res) => {
     apiKey = apiKey.replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '').trim();
 
     const { action, payload } = req.body;
+    
+    // Lazy load GoogleGenAI
+    if (!GoogleGenAI) {
+      const module = await import('@google/genai');
+      GoogleGenAI = module.GoogleGenAI;
+    }
+    
     const ai = new GoogleGenAI({ apiKey });
 
     let result;
