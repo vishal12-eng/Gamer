@@ -81,8 +81,8 @@ const Header: React.FC = () => {
       }
   };
   
-  const navLinkClasses = "relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:text-cyan-300 hover:bg-white/5";
-  const activeNavLinkClasses = "text-cyan-400";
+  const navLinkClasses = "relative px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-cyan-300 hover:bg-blue-50 dark:hover:bg-white/5";
+  const activeNavLinkClasses = "text-blue-600 dark:text-cyan-400";
   
   const renderNavLink = (link: { name: string, path: string }, isMobile = false) => {
     const isCategory = link.path.startsWith('/category/');
@@ -124,11 +124,11 @@ const Header: React.FC = () => {
     <header
       className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ease-out ${
         isScrolled || isMenuOpen
-          ? 'glass shadow-glass-lg'
+          ? 'bg-white/80 dark:glass shadow-lg dark:shadow-glass-lg'
           : 'bg-transparent'
       }`}
       style={{
-        borderBottom: isScrolled ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
+        borderBottom: isScrolled ? '1px solid rgba(0,0,0,0.05) dark:rgba(255,255,255,0.1)' : '1px solid transparent',
       }}
     >
       {/* Animated gradient border at bottom */}
@@ -146,13 +146,13 @@ const Header: React.FC = () => {
           <div className={`flex-shrink-0 transition-transform duration-300 ${logoScale}`}>
             <Link 
               to="/" 
-              className="flex items-center space-x-2 text-2xl font-bold text-white group"
+              className="flex items-center space-x-2 text-2xl font-bold text-blue-900 dark:text-white group"
             >
               <div className="relative">
                 <LogoIcon className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-500 dark:from-cyan-500 dark:to-purple-500 rounded-full blur-lg opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
               </div>
-              <span className="hidden sm:inline bg-gradient-to-r from-white via-white to-cyan-200 bg-clip-text text-transparent transition-all duration-300 group-hover:from-cyan-300 group-hover:to-purple-300">
+              <span className="hidden sm:inline bg-gradient-to-r from-blue-900 to-blue-700 dark:from-white dark:via-white dark:to-cyan-200 bg-clip-text text-transparent transition-all duration-300 group-hover:from-blue-600 group-hover:to-cyan-500 dark:group-hover:from-cyan-300 dark:group-hover:to-purple-300">
                 FutureTechJournal
               </span>
             </Link>
@@ -180,11 +180,11 @@ const Header: React.FC = () => {
                   }}
                   onBlur={() => setIsSearchFocused(false)}
                   placeholder="Search articles..."
-                  className={`bg-white/5 border rounded-full py-2 pl-4 pr-10 text-sm text-white placeholder-gray-400 
-                    focus:outline-none transition-all duration-300
+                  className={`border rounded-full py-2 pl-4 pr-10 text-sm transition-all duration-300 focus:outline-none
+                    bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
                     ${isSearchFocused 
-                      ? 'w-72 border-cyan-400/50 shadow-cyan-glow bg-white/10' 
-                      : 'w-48 border-white/10 hover:border-white/20'
+                      ? 'w-72 border-blue-400 dark:border-cyan-400/50 shadow-lg dark:shadow-cyan-glow bg-white dark:bg-white/10' 
+                      : 'w-48 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
                     }`}
                   autoComplete="off"
                 />
@@ -198,15 +198,15 @@ const Header: React.FC = () => {
               
               {/* Enhanced suggestions dropdown */}
               {isSuggestionsVisible && suggestions.length > 0 && (
-                <ul className="absolute top-full mt-2 w-72 glass rounded-xl shadow-glass-lg overflow-hidden animate-fadeIn">
+                <ul className="absolute top-full mt-2 w-72 bg-white dark:glass rounded-xl shadow-lg dark:shadow-glass-lg overflow-hidden animate-fadeIn z-50">
                     {suggestions.map((suggestion, index) => (
                         <li key={index}>
                             <button
                                 type="button"
-                                className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-purple-500/20 transition-all duration-200 flex items-center gap-3"
+                                className="w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gradient-to-r dark:hover:from-cyan-500/20 dark:hover:to-purple-500/20 transition-all duration-200 flex items-center gap-3"
                                 onClick={() => handleSuggestionClick(suggestion)}
                             >
-                                <SearchIcon className="w-4 h-4 text-gray-500" />
+                                <SearchIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                                 <span className="line-clamp-1">{suggestion}</span>
                             </button>
                         </li>
@@ -254,14 +254,14 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-4 lg:hidden">
             <button 
               onClick={() => navigate('/search')} 
-              className="text-gray-200 hover:text-cyan-400 transition-colors duration-300 p-2 rounded-lg hover:bg-white/5" 
+              className="text-gray-600 dark:text-gray-200 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors duration-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-white/5" 
               aria-label="Open search"
             >
                 <SearchIcon className="h-6 w-6" />
             </button>
             <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)} 
-              className="text-gray-200 hover:text-cyan-400 transition-colors duration-300 p-2 rounded-lg hover:bg-white/5" 
+              className="text-gray-600 dark:text-gray-200 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors duration-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-white/5" 
               aria-label="Open menu"
             >
               <div className="relative w-6 h-6">
@@ -280,7 +280,7 @@ const Header: React.FC = () => {
           isMenuOpen ? 'max-h-[calc(100vh-5rem)] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="glass border-t border-white/10 py-4">
+        <div className="bg-white dark:glass border-t border-gray-200 dark:border-white/10 py-4">
           <ul className="flex flex-col items-center space-y-1 px-4">
              {NAV_LINKS.map((link, index) => {
                const isCategory = link.path.startsWith('/category/');
