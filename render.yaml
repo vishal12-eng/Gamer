@@ -3,8 +3,10 @@ services:
     name: futuretechjournal
     env: node
     plan: free
-    buildCommand: npm install && npm run build && echo "Build complete"
-    startCommand: node server/index.cjs
+    buildCommand: npm install && npm run build
+    startCommand: node server/production.cjs
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: NODE_ENV
+        value: production
