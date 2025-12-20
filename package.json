@@ -1,50 +1,64 @@
 {
   "name": "futuretechjournal",
+  "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "An ultra-modern, AI-powered news and blog website.",
-  "private": true,
   "scripts": {
-    "preinstall": "npm cache clean --force",
-    "dev": "node server/index.cjs & vite",
-    "dev:frontend": "vite",
-    "dev:backend": "node server/index.cjs",
-    "build": "vite build && npm run seo:generate",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview",
-    "seo:generate": "node scripts/generate-sitemap.cjs && node scripts/generate-robots.cjs",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "lint": "eslint .",
+    "postinstall": "echo 'Dependencies installed successfully'"
   },
+
   "dependencies": {
-    "@google/genai": "^1.29.1",
-    "@neondatabase/serverless": "^1.0.2",
-    "@netlify/functions": "^2.6.0",
-    "@tailwindcss/postcss": "^4.1.17",
-    "@types/node": "^24.10.1",
-    "@types/ws": "^8.18.1",
-    "autoprefixer": "^10.4.22",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "drizzle-kit": "^0.31.7",
-    "drizzle-orm": "^0.44.7",
-    "express": "^5.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+
+    "react-router-dom": "^6.22.3",
+
+    "axios": "^1.6.8",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.3.0",
+
+    "framer-motion": "^11.2.12",
+
+    "mongoose": "^8.5.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.8.3",
-    "node-cron": "^4.2.1",
-    "postcss": "^8.5.6",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-helmet-async": "2.0.5",
-    "react-router-dom": "6.22.3",
-    "tailwindcss": "^4.1.17",
-    "ws": "^8.18.3"
+
+    "rss-parser": "^3.13.0",
+
+    "react-icons": "^5.2.1",
+    "lucide-react": "^0.462.0",
+
+    "react-hot-toast": "^2.4.1",
+
+    "marked": "^13.0.0",
+    "dompurify": "^3.1.6",
+
+    "uuid": "^9.0.1"
   },
+
   "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "netlify-cli": "^23.12.1",
-    "typescript": "^5.5.3",
-    "vite": "^5.2.0"
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+
+    "@types/node": "^20.12.12",
+
+    "@vitejs/plugin-react": "^4.3.1",
+
+    "vite": "^5.3.5",
+
+    "tailwindcss": "^3.4.7",
+    "postcss": "^8.4.38",
+    "autoprefixer": "^10.4.19",
+
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.7"
+  },
+
+  "engines": {
+    "node": ">=18.18.0"
   }
 }
