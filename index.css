@@ -188,6 +188,23 @@ html.dark .reading-progress {
 }
 
 /* --------------------------------------------------
+   MARQUEE / TRENDING TICKER (HORIZONTAL SCROLL FIX)
+-------------------------------------------------- */
+
+.marquee {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+}
+
+.marquee-content {
+  display: flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation: ticker-scroll 40s linear infinite;
+}
+
+/* --------------------------------------------------
    REMOVE UNWANTED DEFAULT STYLES
 -------------------------------------------------- */
 
