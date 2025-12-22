@@ -128,12 +128,14 @@ const HomePage: React.FC = () => {
             </Link>
           </div>
 
-          {/* Title with text shadow */}
+          {/* Title with enhanced styling */}
           <h1 
             className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold my-6 leading-tight
-              [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_12px_rgba(0,0,0,0.7),0_8px_20px_rgba(0,0,0,0.6)]
-              bg-gradient-to-r from-white via-white to-gray-300 bg-clip-text text-transparent
-              transition-all duration-1000 ease-out`}
+              [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_12px_rgba(0,0,0,0.8),0_8px_24px_rgba(0,0,0,0.7),0_12px_32px_rgba(6,182,212,0.3)]
+              bg-gradient-to-r from-cyan-100 via-white to-cyan-50 bg-clip-text text-transparent
+              drop-shadow-2xl
+              transition-all duration-1000 ease-out
+              hover:from-cyan-50 hover:via-white hover:to-cyan-100`}
             style={{ transitionDelay: '400ms' }}
           >
             {heroArticle.title}
@@ -231,7 +233,7 @@ const HomePage: React.FC = () => {
             <SparklesIcon className="w-10 h-10 text-cyan-400 mr-4 float-slow" />
             <div className="absolute inset-0 bg-cyan-500/30 blur-xl"></div>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold gradient-text-animated">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
             Latest Articles
           </h2>
           <div className="ml-4 flex-grow h-px bg-gradient-to-r from-cyan-500/50 via-purple-500/30 to-transparent"></div>

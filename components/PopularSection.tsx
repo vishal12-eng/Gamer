@@ -88,7 +88,7 @@ const PopularSection: React.FC<PopularSectionProps> = ({ articles }) => {
     <section className="py-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-1 h-8 bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full"></div>
-        <h2 className="text-2xl font-bold text-white">Popular</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Popular</h2>
         <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/50 to-transparent"></div>
       </div>
 

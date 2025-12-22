@@ -117,7 +117,7 @@ const EditorsChoice: React.FC<EditorsChoiceProps> = ({ articles }) => {
     <section className="py-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-1 h-8 bg-gradient-to-b from-purple-400 to-cyan-500 rounded-full"></div>
-        <h2 className="text-2xl font-bold text-white">Editor's Choice</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Editor's Choice</h2>
         <div className="flex-1 h-px bg-gradient-to-r from-purple-500/50 to-transparent"></div>
       </div>
 
