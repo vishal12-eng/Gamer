@@ -73,11 +73,24 @@ const Chatbot: React.FC = () => {
         }
     } catch (error) {
         console.error("Error in chatbot stream:", error);
+        let errorMessage = "I seem to be having trouble connecting. Please try again later.";
+        
+        // Provide more specific error messages
+        if (error instanceof Error) {
+            if (error.message.includes('429') || error.message.includes('quota')) {
+                errorMessage = "API quota exceeded. Please try again in a few moments.";
+            } else if (error.message.includes('401') || error.message.includes('unauthorized')) {
+                errorMessage = "Authentication error. Please refresh the page.";
+            } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                errorMessage = "Network error. Please check your connection.";
+            }
+        }
+        
         setMessages((prev) => {
             const newMessages = [...prev];
             const lastMessage = newMessages[newMessages.length - 1];
             if (lastMessage?.sender === 'bot') {
-                lastMessage.text = "I seem to be having trouble connecting. Please try again later.";
+                lastMessage.text = errorMessage;
             }
             return newMessages;
         });
