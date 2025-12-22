@@ -131,8 +131,8 @@ const HomePage: React.FC = () => {
           {/* Title with text shadow */}
           <h1 
             className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold my-6 leading-tight
-              [text-shadow:0_4px_30px_rgba(0,0,0,0.5)]
-              bg-gradient-to-r from-white via-white to-gray-300 bg-clip-text
+              [text-shadow:0_2px_4px_rgba(0,0,0,0.8),0_4px_12px_rgba(0,0,0,0.7),0_8px_20px_rgba(0,0,0,0.6)]
+              bg-gradient-to-r from-white via-white to-gray-300 bg-clip-text text-transparent
               transition-all duration-1000 ease-out`}
             style={{ transitionDelay: '400ms' }}
           >

@@ -195,6 +195,7 @@ html.dark .reading-progress {
   overflow: hidden;
   width: 100%;
   position: relative;
+  overflow-x: hidden;
 }
 
 .marquee-content {
@@ -202,6 +203,7 @@ html.dark .reading-progress {
   white-space: nowrap;
   will-change: transform;
   animation: ticker-scroll 40s linear infinite;
+  flex-shrink: 0;
 }
 
 /* --------------------------------------------------
