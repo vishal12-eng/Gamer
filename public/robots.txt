@@ -1,25 +1,8 @@
-# Robots.txt for FutureTechJournal
-# https://futuretechjournal.onrender.com
-
 User-agent: *
-Allow: /
+Disallow:
 
-# Disallow admin and internal tool pages
+# Block internal/admin tools only
 Disallow: /admin/
 Disallow: /ai-tools/
 
-# Allow all search engine crawlers
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Slurp
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
-
-# Sitemap location
 Sitemap: https://futuretechjournal.onrender.com/sitemap.xml
