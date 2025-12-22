@@ -1,5 +1,5 @@
 # Robots.txt for FutureTechJournal
-# https://futuretechjournal50.netlify.app
+# https://futuretechjournal.onrender.com
 
 User-agent: *
 Allow: /
@@ -22,4 +22,4 @@ User-agent: DuckDuckBot
 Allow: /
 
 # Sitemap location
-Sitemap: https://futuretechjournal50.netlify.app/sitemap.xml
+Sitemap: https://futuretechjournal.onrender.com/sitemap.xml
