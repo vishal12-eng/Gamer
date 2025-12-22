@@ -3,109 +3,109 @@
         xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://futuretechjournal50.netlify.app/</loc>
+    <loc>https://futuretechjournal.onrender.com/</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/about</loc>
+    <loc>https://futuretechjournal.onrender.com/about</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/contact</loc>
+    <loc>https://futuretechjournal.onrender.com/contact</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/privacy</loc>
+    <loc>https://futuretechjournal.onrender.com/privacy</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/terms</loc>
+    <loc>https://futuretechjournal.onrender.com/terms</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/disclaimer</loc>
+    <loc>https://futuretechjournal.onrender.com/disclaimer</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/foryou</loc>
+    <loc>https://futuretechjournal.onrender.com/foryou</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/search</loc>
+    <loc>https://futuretechjournal.onrender.com/search</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/sitemap</loc>
+    <loc>https://futuretechjournal.onrender.com/sitemap</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/technology</loc>
+    <loc>https://futuretechjournal.onrender.com/category/technology</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/ai</loc>
+    <loc>https://futuretechjournal.onrender.com/category/ai</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/business</loc>
+    <loc>https://futuretechjournal.onrender.com/category/business</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/global</loc>
+    <loc>https://futuretechjournal.onrender.com/category/global</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/product</loc>
+    <loc>https://futuretechjournal.onrender.com/category/product</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/entertainment</loc>
+    <loc>https://futuretechjournal.onrender.com/category/entertainment</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/science</loc>
+    <loc>https://futuretechjournal.onrender.com/category/science</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/india</loc>
+    <loc>https://futuretechjournal.onrender.com/category/india</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://futuretechjournal50.netlify.app/category/us</loc>
+    <loc>https://futuretechjournal.onrender.com/category/us</loc>
     <lastmod>2025-12-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
