@@ -1,6 +1,6 @@
 
 import { useState, lazy, Suspense } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -54,7 +54,7 @@ function App() {
         <AdsProvider>
           <ToastContext.Provider value={{ showToast }}>
             <ArticleProvider>
-              <HashRouter>
+              <BrowserRouter>
               <ScrollToTop>
                 <div className="flex flex-col min-h-screen font-sans bg-white dark:bg-gray-950 transition-colors duration-500">
                   <Header />
@@ -135,7 +135,7 @@ function App() {
                   <Toast message={toastMessage} onClose={closeToast} />
                 </div>
               </ScrollToTop>
-              </HashRouter>
+              </BrowserRouter>
             </ArticleProvider>
           </ToastContext.Provider>
         </AdsProvider>
