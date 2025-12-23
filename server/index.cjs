@@ -5,7 +5,9 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { processAndSaveArticles, fetchRssFeeds, feedMap } = require('./rssIngestionService.cjs');
+const GoogleSearchConsoleService = require('../src/services/googleSearchConsoleService.cjs');
 let GoogleGenAI = null;
+let gscService = null;
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -1873,17 +1875,95 @@ async function logActivity(type, details = '') {
 }
 
 // =============================================
+// GOOGLE SEARCH CONSOLE API ENDPOINTS
+// =============================================
+app.get('/api/gsc/sites', async (req, res) => {
+  try {
+    if (!gscService || !gscService.initialized) {
+      return res.status(503).json({ error: 'GSC service not initialized', sites: [] });
+    }
+    const result = await gscService.listSites();
+    res.json(result);
+  } catch (error) {
+    console.error('[GSC API] Error listing sites:', error.message);
+    res.status(500).json({ error: 'Failed to fetch GSC sites', sites: [] });
+  }
+});
+
+app.get('/api/gsc/searchanalytics', async (req, res) => {
+  try {
+    if (!gscService || !gscService.initialized) {
+      return res.status(503).json({ error: 'GSC service not initialized', data: [] });
+    }
+    
+    const { siteUrl, startDate, endDate, page, rowLimit } = req.query;
+    if (!siteUrl) {
+      return res.status(400).json({ error: 'siteUrl parameter required', data: [] });
+    }
+    
+    const result = await gscService.getSearchAnalytics(siteUrl, {
+      startDate,
+      endDate,
+      page,
+      rowLimit: parseInt(rowLimit) || 25000,
+    });
+    res.json(result);
+  } catch (error) {
+    console.error('[GSC API] Error fetching search analytics:', error.message);
+    res.status(500).json({ error: 'Failed to fetch search analytics', data: [] });
+  }
+});
+
+app.get('/api/gsc/sitemaps', async (req, res) => {
+  try {
+    if (!gscService || !gscService.initialized) {
+      return res.status(503).json({ error: 'GSC service not initialized', sitemaps: [] });
+    }
+    
+    const { siteUrl } = req.query;
+    if (!siteUrl) {
+      return res.status(400).json({ error: 'siteUrl parameter required', sitemaps: [] });
+    }
+    
+    const result = await gscService.getSitemaps(siteUrl);
+    res.json(result);
+  } catch (error) {
+    console.error('[GSC API] Error fetching sitemaps:', error.message);
+    res.status(500).json({ error: 'Failed to fetch sitemaps', sitemaps: [] });
+  }
+});
+
+app.post('/api/gsc/cache/clear', authenticateToken, async (req, res) => {
+  try {
+    if (!gscService) {
+      return res.status(503).json({ error: 'GSC service not initialized' });
+    }
+    gscService.clearCache();
+    res.json({ success: true, message: 'GSC cache cleared' });
+  } catch (error) {
+    console.error('[GSC API] Error clearing cache:', error.message);
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
+// =============================================
 // SERVER STARTUP
 // =============================================
 async function startServer() {
   // Initialize MongoDB connection
   await initializeMongoDB();
+  
+  // Initialize Google Search Console service
+  gscService = new GoogleSearchConsoleService();
+  const gscInitialized = await gscService.initialize();
+  console.log(`[Backend Server] GSC Service initialized: ${gscInitialized}`);
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Backend Server] Running on http://0.0.0.0:${PORT}`);
     console.log(`[Backend Server] API Key available: ${!!(process.env.GOOGLE_AI_API_KEY || process.env.API_KEY || process.env.GEMINI_API_KEY)}`);
     console.log(`[Backend Server] Pixabay Key available: ${!!process.env.PIXABAY_API_KEY}`);
     console.log(`[Backend Server] Mailchimp Key available: ${!!process.env.MAILCHIMP_API_KEY}`);
+    console.log(`[Backend Server] GSC initialized: ${gscInitialized}`);
     console.log(`[Backend Server] MongoDB connected: ${isMongoConnected()}`);
     console.log(`[Backend Server] Expanded articles cached: ${Object.keys(expandedArticlesCache).length}`);
     
