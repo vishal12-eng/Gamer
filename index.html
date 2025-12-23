@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
+    <!-- Theme handling (unchanged) -->
     <script>
-      (function() {
-        const theme = localStorage.getItem('theme');
-        if (theme === 'light') {
-          document.documentElement.classList.remove('dark');
+      (function () {
+        const theme = localStorage.getItem("theme");
+        if (theme === "light") {
+          document.documentElement.classList.remove("dark");
         } else if (
-          theme === 'dark' ||
-          (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          theme === "dark" ||
+          (!theme && window.matchMedia("(prefers-color-scheme: dark)").matches)
         ) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add("dark");
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove("dark");
         }
       })();
     </script>
@@ -25,65 +26,117 @@
       content="C1H5VfM-BkKuhK1STlM2ULfm_sQLrepkouNfsOXxObg"
     />
 
+    <!-- Viewport -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <!-- Core SEO -->
+    <title>Future Tech Journal – AI News & Technology Blog</title>
+    <meta
+      name="description"
+      content="Future Tech Journal is your premier source for AI-powered news, technology insights, and future innovations."
+    />
+    <meta
+      name="keywords"
+      content="AI news, technology blog, artificial intelligence, tech news, future technology, innovation"
+    />
+    <meta name="author" content="Future Tech Journal" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1"
+    />
+
+    <!-- Theme & App -->
+    <meta name="theme-color" content="#22D3EE" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Favicon -->
     <link
       rel="icon"
       type="image/svg+xml"
       href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0' y1='0' x2='1' y2='1'%3e%3cstop offset='0%25' stop-color='%2322D3EE'/%3e%3cstop offset='100%25' stop-color='%23A855F7'/%3e%3c/linearGradient%3e%3c/defs%3e%3cpath d='M 50,15 L 80,32.5 L 80,67.5 L 50,85 L 20,67.5 L 20,32.5 Z' fill='url(%23grad)'/%3e%3c/svg%3e"
     />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Future Tech Journal" />
     <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      property="og:title"
+      content="Future Tech Journal – AI News & Technology Blog"
     />
-    <meta name="theme-color" content="#22D3EE" />
-    <meta name="color-scheme" content="dark light" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta
-      name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1"
-    />
-    <meta name="author" content="FutureTechJournal" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta
-      name="description"
-      content="FutureTechJournal - Your premier source for AI-powered news, technology insights, and cutting-edge tech journalism."
-    />
-    <meta
-      name="keywords"
-      content="technology, AI, artificial intelligence, tech news, innovation, science, gadgets"
-    />
-    <meta property="og:title" content="FutureTechJournal - AI News & Blog" />
     <meta
       property="og:description"
-      content="Your premier source for AI-powered news, technology insights, and cutting-edge tech journalism."
+      content="Your trusted source for AI-powered news, technology insights, and future trends."
     />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta
+      property="og:image"
+      content="https://futuretechjournal.onrender.com/og-image.png"
+    />
+    <meta
+      property="og:url"
+      content="https://futuretechjournal.onrender.com/"
+    />
+
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="FutureTechJournal - AI News & Blog" />
+    <meta
+      name="twitter:title"
+      content="Future Tech Journal – AI News & Technology Blog"
+    />
     <meta
       name="twitter:description"
-      content="Your premier source for AI-powered news, technology insights, and cutting-edge tech journalism."
+      content="Your trusted source for AI-powered news, technology insights, and future trends."
+    />
+    <meta
+      name="twitter:image"
+      content="https://futuretechjournal.onrender.com/og-image.png"
     />
 
-    <title>FutureTechJournal - AI News & Blog</title>
+    <!-- WebSite Schema (SITE NAME FIX) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Future Tech Journal",
+        "alternateName": "FutureTechJournal",
+        "url": "https://futuretechjournal.onrender.com/"
+      }
+    </script>
 
+    <!-- Organization + Logo Schema (LOGO FIX) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Future Tech Journal",
+        "url": "https://futuretechjournal.onrender.com/",
+        "logo": "https://futuretechjournal.onrender.com/logo.png"
+      }
+    </script>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-      as="style"
-    />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Performance -->
     <link rel="preconnect" href="https://pixabay.com" />
     <link rel="dns-prefetch" href="https://pixabay.com" />
     <link rel="modulepreload" href="/index.tsx" />
   </head>
+
   <body
     class="bg-gray-100 dark:bg-black dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(34,211,238,0.15),rgba(0,0,0,0))] text-gray-900 dark:text-gray-100 font-sans antialiased"
   >
