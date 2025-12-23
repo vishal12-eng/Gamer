@@ -86,10 +86,10 @@ const HomePage: React.FC = () => {
         FutureTechJournal – AI, Technology & Future Innovation News
       </h1>
 
-      {/* ================= HERO SECTION ================= */}
+      {/* ================= HERO SECTION (FIXED) ================= */}
       <section
         ref={heroRef}
-        className="relative -mt-24 h-[70vh] md:h-[85vh] flex items-center justify-center text-center text-white overflow-hidden"
+        className="relative pt-[96px] md:pt-[120px] h-[70vh] md:h-[85vh] flex items-center justify-center text-center text-white overflow-hidden"
       >
         <div className="absolute inset-0 scale-105">
           <img
@@ -130,12 +130,7 @@ const HomePage: React.FC = () => {
             </Link>
           </div>
 
-          {/* Article Title (kept intentionally) */}
-          <h2
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold my-6 leading-tight
-            [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_12px_rgba(0,0,0,0.8),0_8px_24px_rgba(0,0,0,0.7),0_12px_32px_rgba(6,182,212,0.3)]
-            bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent"
-          >
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold my-6 leading-tight bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent">
             {heroArticle.title}
           </h2>
 
