@@ -83,8 +83,8 @@ const Footer: React.FC = () => {
           to={to} 
           className={`group block text-sm transition-all duration-300 py-1 ${
             isActive 
-              ? 'text-cyan-400 font-semibold' 
-              : 'text-gray-400 hover:text-cyan-400'
+              ? 'text-cyan-400 dark:text-cyan-400 font-semibold' 
+              : 'text-gray-600 dark:text-gray-400 hover:text-cyan-500 dark:hover:text-cyan-400'
           }`}
         >
           <span className="relative">

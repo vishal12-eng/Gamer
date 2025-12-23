@@ -46,11 +46,15 @@ const InfiniteScrollFeed: React.FC<InfiniteScrollFeedProps> = ({ articles, loadi
     setDisplayCount(10);
   }, [articles]);
 
+  const handleLoadMore = () => {
+    loadMore();
+  };
+
   return (
     <section className="py-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-1 h-8 bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full"></div>
-        <h2 className="text-2xl font-bold text-white">Latest Articles</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Latest Articles</h2>
         <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/50 to-transparent"></div>
       </div>
 
@@ -68,7 +72,7 @@ const InfiniteScrollFeed: React.FC<InfiniteScrollFeedProps> = ({ articles, loadi
             ))}
           </div>
 
-          <div ref={observerRef} className="w-full py-8 flex justify-center">
+          <div ref={observerRef} className="w-full py-8 flex flex-col items-center gap-4">
             {isLoadingMore && (
               <div className="flex items-center gap-3">
                 <div className="relative w-10 h-10">
@@ -77,6 +81,16 @@ const InfiniteScrollFeed: React.FC<InfiniteScrollFeedProps> = ({ articles, loadi
                 </div>
                 <span className="text-gray-400 text-sm">Loading more articles...</span>
               </div>
+            )}
+            
+            {!isLoadingMore && hasMore && displayedArticles.length > 0 && (
+              <button 
+                onClick={handleLoadMore}
+                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold rounded-full
+                  hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 hover:scale-105 hover:shadow-cyan-glow"
+              >
+                Load More Articles
+              </button>
             )}
             
             {!hasMore && displayedArticles.length > 0 && (

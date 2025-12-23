@@ -202,7 +202,7 @@ html.dark .reading-progress {
   display: flex;
   white-space: nowrap;
   will-change: transform;
-  animation: ticker-scroll 40s linear infinite;
+  animation: ticker-scroll 34s linear infinite;
   flex-shrink: 0;
 }
 

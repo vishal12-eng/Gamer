@@ -132,10 +132,10 @@ const HomePage: React.FC = () => {
           <h1 
             className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold my-6 leading-tight
               [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_12px_rgba(0,0,0,0.8),0_8px_24px_rgba(0,0,0,0.7),0_12px_32px_rgba(6,182,212,0.3)]
-              bg-gradient-to-r from-cyan-100 via-white to-cyan-50 bg-clip-text text-transparent
+              bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent
               drop-shadow-2xl
               transition-all duration-1000 ease-out
-              hover:from-cyan-50 hover:via-white hover:to-cyan-100`}
+              hover:from-cyan-100 hover:via-white hover:to-cyan-100`}
             style={{ transitionDelay: '400ms' }}
           >
             {heroArticle.title}

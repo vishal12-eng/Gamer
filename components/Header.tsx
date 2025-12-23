@@ -152,7 +152,7 @@ const Header: React.FC = () => {
                 <LogoIcon className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-500 dark:from-cyan-500 dark:to-purple-500 rounded-full blur-lg opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
               </div>
-              <span className="hidden sm:inline bg-gradient-to-r from-blue-900 to-blue-700 dark:from-white dark:via-white dark:to-cyan-200 bg-clip-text text-transparent transition-all duration-300 group-hover:from-blue-600 group-hover:to-cyan-500 dark:group-hover:from-cyan-300 dark:group-hover:to-purple-300">
+              <span className="hidden sm:inline bg-gradient-to-r from-blue-600 to-blue-600 dark:from-white dark:via-white dark:to-cyan-200 bg-clip-text text-transparent transition-all duration-300 group-hover:from-blue-500 group-hover:to-cyan-500 dark:group-hover:from-cyan-300 dark:group-hover:to-purple-300">
                 FutureTechJournal
               </span>
             </Link>

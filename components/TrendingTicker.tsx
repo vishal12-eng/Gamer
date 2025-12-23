@@ -11,7 +11,7 @@ const TrendingTicker: React.FC<TrendingTickerProps> = ({ articles }) => {
   const trendingArticles = articles.slice(0, 5);
 
   return (
-    <div className="marquee relative w-full h-10 bg-gray-800 dark:bg-gray-900 border-y border-gray-500/30 overflow-hidden">
+    <div className="marquee relative w-full h-10 bg-gray-800 dark:bg-gray-900 border-y border-gray-500/30 overflow-hidden flex items-center justify-center">
       <div className="marquee-content flex items-center animate-ticker-scroll">
         {trendingArticles.map((article, index) => (
           <div key={index} className="flex-shrink-0 flex items-center mx-8">
