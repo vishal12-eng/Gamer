@@ -26,21 +26,9 @@ const InfiniteScrollFeed: React.FC<InfiniteScrollFeedProps> = ({ articles, loadi
   }, [isLoadingMore, hasMore, articles.length]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1, rootMargin: '100px' }
-    );
-
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [loadMore, hasMore, isLoadingMore]);
+    // Removed automatic IntersectionObserver loading
+    // Articles now load only on manual button click
+  }, []);
 
   useEffect(() => {
     setDisplayCount(10);
