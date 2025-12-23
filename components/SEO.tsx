@@ -1,6 +1,11 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { SEO_CONFIG, buildCanonicalUrl, sanitizeDescription, sanitizeTitle } from '../utils/seoConfig';
+import {
+  SEO_CONFIG,
+  buildCanonicalUrl,
+  sanitizeDescription,
+  sanitizeTitle
+} from '../utils/seoConfig';
 
 interface SEOProps {
   title?: string;
@@ -18,20 +23,23 @@ interface SEOProps {
   faqs?: Array<{ question: string; answer: string }>;
 }
 
-const buildFAQSchema = (faqs: Array<{ question: string; answer: string }>): object => {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": faqs.map(faq => ({
-      "@type": "Question",
-      "name": faq.question,
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": faq.answer
-      }
-    }))
-  };
-};
+/* ============================
+   FAQ SCHEMA BUILDER
+============================ */
+const buildFAQSchema = (
+  faqs: Array<{ question: string; answer: string }>
+): object => ({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+});
 
 const SEO: React.FC<SEOProps> = ({
   title,
@@ -48,34 +56,50 @@ const SEO: React.FC<SEOProps> = ({
   noindex = false,
   faqs
 }) => {
-  const fullTitle = title 
-    ? (title.includes(SEO_CONFIG.siteName) ? sanitizeTitle(title) : `${sanitizeTitle(title)} | ${SEO_CONFIG.siteName}`)
+  /* ============================
+     TITLE & META
+  ============================ */
+  const fullTitle = title
+    ? title.includes(SEO_CONFIG.siteName)
+      ? sanitizeTitle(title)
+      : `${sanitizeTitle(title)} | ${SEO_CONFIG.siteName}`
     : SEO_CONFIG.defaultTitle;
-  
-  const finalDescription = sanitizeDescription(description || SEO_CONFIG.defaultDescription);
+
+  const finalDescription = sanitizeDescription(
+    description || SEO_CONFIG.defaultDescription
+  );
+
   const finalImage = image || SEO_CONFIG.defaultImage;
   const finalUrl = url ? buildCanonicalUrl(url) : SEO_CONFIG.siteUrl;
-  const finalKeywords = keywords && keywords.length > 0 ? keywords.join(', ') : SEO_CONFIG.defaultKeywords.join(', ');
 
-  const robotsContent = noindex 
-    ? 'noindex, nofollow' 
+  const finalKeywords =
+    keywords && keywords.length > 0
+      ? keywords.join(', ')
+      : SEO_CONFIG.defaultKeywords.join(', ');
+
+  /* ============================
+     ROBOTS (VERY IMPORTANT)
+     - Pagination: noindex, follow
+     - Main pages: index, follow
+  ============================ */
+  const robotsContent = noindex
+    ? 'noindex, follow'
     : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 
+  /* ============================
+     SCHEMA MERGE
+  ============================ */
   const getCombinedSchema = (): object[] | null => {
     const schemas: object[] = [];
-    
+
     if (schema) {
-      if (Array.isArray(schema)) {
-        schemas.push(...schema);
-      } else {
-        schemas.push(schema);
-      }
+      Array.isArray(schema) ? schemas.push(...schema) : schemas.push(schema);
     }
-    
+
     if (faqs && faqs.length > 0) {
       schemas.push(buildFAQSchema(faqs));
     }
-    
+
     return schemas.length > 0 ? schemas : null;
   };
 
@@ -83,12 +107,14 @@ const SEO: React.FC<SEOProps> = ({
 
   return (
     <Helmet>
+      {/* ===== BASIC SEO ===== */}
       <title>{fullTitle}</title>
       <meta name="description" content={finalDescription} />
       <meta name="keywords" content={finalKeywords} />
       <link rel="canonical" href={finalUrl} />
       <meta name="robots" content={robotsContent} />
 
+      {/* ===== OPEN GRAPH ===== */}
       <meta property="og:type" content={type} />
       <meta property="og:url" content={finalUrl} />
       <meta property="og:title" content={fullTitle} />
@@ -96,7 +122,8 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:image" content={finalImage} />
       <meta property="og:site_name" content={SEO_CONFIG.siteName} />
       <meta property="og:locale" content={SEO_CONFIG.locale} />
-      
+
+      {/* ===== ARTICLE META ===== */}
       {type === 'article' && publishedTime && (
         <meta property="article:published_time" content={publishedTime} />
       )}
@@ -110,6 +137,7 @@ const SEO: React.FC<SEOProps> = ({
         <meta property="article:section" content={section} />
       )}
 
+      {/* ===== TWITTER ===== */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:site" content={SEO_CONFIG.twitterHandle} />
       <meta name="twitter:creator" content={SEO_CONFIG.twitterHandle} />
@@ -117,6 +145,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:description" content={finalDescription} />
       <meta name="twitter:image" content={finalImage} />
 
+      {/* ===== STRUCTURED DATA ===== */}
       {combinedSchema && (
         <script type="application/ld+json">
           {JSON.stringify(combinedSchema)}
